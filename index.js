@@ -5,6 +5,3 @@ export * as tools from "./tools.js";
 export const name = "@token-ring/git";
 export const description = "TokenRing Coder Git Intregration";
 export const version = "0.1.0";
-
-
-
