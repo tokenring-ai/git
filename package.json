@@ -13,12 +13,11 @@
 		"execa": "^8.0.1"
 	},
 	"exports": {
-		".": "./index.js",
-		"./*": "./*.js"
+		".": "./index.ts",
+		"./*": "./*.ts"
 	},
-
-	"license": "MIT",
 	"type": "module",
+	"license": "MIT",
 	"scripts": {
 		"eslint": "eslint --fix ./"
 	}
