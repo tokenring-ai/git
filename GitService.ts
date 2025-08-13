@@ -1,4 +1,4 @@
-import { Service } from "@token-ring/registry";
+import {Service} from "@token-ring/registry";
 
 export default class GitService extends Service {
   name = "GitService";

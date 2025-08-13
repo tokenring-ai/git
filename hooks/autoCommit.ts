@@ -1,4 +1,4 @@
-import { execute as commit } from "../tools/commit.ts";
+import {execute as commit} from "../tools/commit.ts";
 import ChatService from "@token-ring/chat/ChatService";
 import FileSystemService from "@token-ring/filesystem/FileSystemService";
 import TestingService from "@token-ring/testing/TestingService";

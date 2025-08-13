@@ -1,7 +1,7 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { execute as commit }from "../tools/commit.ts";
-import { execute as rollback } from "../tools/rollback.ts";
-import { execute as branch } from "../tools/branch.ts";
+import {execute as commit} from "../tools/commit.ts";
+import {execute as rollback} from "../tools/rollback.ts";
+import {execute as branch} from "../tools/branch.ts";
 import {Registry} from "@token-ring/registry";
 
 /**
