@@ -1,10 +1,10 @@
 import ChatService from "@token-ring/chat/ChatService";
 import { FileSystemService } from "@token-ring/filesystem";
 
-export default execute;
+
 export async function execute(
   args: { commit?: string; steps?: number },
-  registry: any,
+  registry: Registry,
 ) {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const fileSystem = registry.requireFirstServiceByType(FileSystemService);
@@ -61,6 +61,7 @@ export async function execute(
 
 export const description = "Rolls back to a previous git commit.";
 import { z } from "zod";
+import {Registry} from "@token-ring/registry";
 
 export const parameters = z.object({
   commit: z.string().describe("The commit hash to rollback to").optional(),

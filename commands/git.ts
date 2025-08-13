@@ -1,7 +1,8 @@
 import ChatService from "@token-ring/chat/ChatService";
-import commit from "../tools/commit.ts";
-import rollback from "../tools/rollback.ts";
-import branch from "../tools/branch.ts";
+import { execute as commit }from "../tools/commit.ts";
+import { execute as rollback } from "../tools/rollback.ts";
+import { execute as branch } from "../tools/branch.ts";
+import {Registry} from "@token-ring/registry";
 
 /**
  * Combined git commit/rollback/branch command
@@ -11,7 +12,7 @@ import branch from "../tools/branch.ts";
 export const description =
   "/git <commit|rollback|branch> [options] - Git operations. Use 'commit' to commit changes, 'rollback [position]' to rollback by [position] commits (default: 1), 'branch [options]' for branch management.";
 
-export async function execute(remainder: string, registry: any) {
+export async function execute(remainder: string, registry: Registry) {
   const chatService = registry.requireFirstServiceByType(ChatService);
 
   if (!remainder || !remainder.trim()) {
@@ -46,7 +47,7 @@ export async function execute(remainder: string, registry: any) {
           return;
         }
       }
-      await rollback({ steps } as any, chatService);
+      await rollback({ steps }, registry);
       break;
     }
     case "branch": {

@@ -3,11 +3,12 @@ import ModelRegistry from "@token-ring/ai-client/ModelRegistry";
 import { FileSystemService } from "@token-ring/filesystem";
 import { ChatMessageStorage, createChatRequest } from "@token-ring/ai-client";
 import { z } from "zod";
+import { Registry } from "@token-ring/registry";
 
-export default execute;
+
 export async function execute(
   args: { message?: string },
-  registry: any,
+  registry: Registry,
 ) {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const chatMessageStorage =
@@ -31,7 +32,6 @@ export async function execute(
             content:
               "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
           },
-          model: "gpt-4.1-nano",
         },
         registry,
       );
@@ -40,7 +40,7 @@ export async function execute(
 
       delete (request as any).tools;
 
-      const client = modelRegistry.getFirstOnlineClient({ tags: ["chat"] });
+      const client = modelRegistry.chat.getFirstOnlineClient('auto');
       const [output] = await client.textChat(request, registry);
       if (output && output.trim() !== "") {
         // Ensure AI provides a non-empty message

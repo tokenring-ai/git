@@ -1,17 +1,19 @@
-import commit from "../tools/commit";
+import { execute as commit } from "../tools/commit.ts";
 import ChatService from "@token-ring/chat/ChatService";
 import FileSystemService from "@token-ring/filesystem/FileSystemService";
 import TestingService from "@token-ring/testing/TestingService";
+import {Registry} from "@token-ring/registry";
+
 
 export const description =
 	"Automatically commit changes to the source directory to git";
 
-export async function afterTesting(registry) {
+export async function afterTesting(registry: Registry): Promise<void> {
 	const chatService = registry.requireFirstServiceByType(ChatService);
 
 	const filesystem = registry.requireFirstServiceByType(FileSystemService);
 	if (filesystem.dirty) {
-		const testingServices = registry.getServicesByType(TestingService);
+		const testingServices = registry.services.getServicesByType(TestingService);
 		for (const testingService of testingServices) {
 			if (!testingService.allTestsPassed()) {
 				chatService.errorLine(

@@ -1,11 +1,12 @@
 import ChatService from "@token-ring/chat/ChatService";
 import { FileSystemService } from "@token-ring/filesystem";
 import { z } from "zod";
+import {Registry} from "@token-ring/registry";
 
-export default execute;
+
 export async function execute(
   args: { action?: "list" | "create" | "switch" | "delete" | "current" | null; branchName?: string },
-  registry: any,
+  registry: Registry,
 ) {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const fileSystem = registry.requireFirstServiceByType(FileSystemService);
