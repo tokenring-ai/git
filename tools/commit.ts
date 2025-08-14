@@ -3,7 +3,7 @@ import ModelRegistry from "@token-ring/ai-client/ModelRegistry";
 import {FileSystemService} from "@token-ring/filesystem";
 import {ChatMessageStorage, createChatRequest} from "@token-ring/ai-client";
 import {z} from "zod";
-import {Registry} from "@token-ring/registry";
+import type {Registry} from "@token-ring/registry";
 
 
 export async function execute(
@@ -36,11 +36,12 @@ export async function execute(
         registry,
       );
 
-      request.input.splice(0, request.input.length - 2);
+      // Keep only the last two messages (system/user) if present
+      request.messages.splice(0, request.messages.length - 2);
 
       delete (request as any).tools;
 
-      const client = modelRegistry.chat.getFirstOnlineClient('auto');
+      const client = await modelRegistry.chat.getFirstOnlineClient('auto');
       const [output] = await client.textChat(request, registry);
       if (output && output.trim() !== "") {
         // Ensure AI provides a non-empty message
@@ -59,7 +60,7 @@ export async function execute(
     chatService.infoLine("Using provided commit message.");
   }
 
-  await fileSystem.executeCommand(["git", "add", "."], registry);
+  await fileSystem.executeCommand(["git", "add", "." ]);
   await fileSystem.executeCommand([
     "git",
     "-c",
