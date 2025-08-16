@@ -15,13 +15,13 @@ export async function afterTesting(registry: Registry): Promise<void> {
   if (filesystem.dirty) {
     const testingServices = registry.services.getServicesByType(TestingService);
     for (const testingService of testingServices) {
-      if (!testingService.allTestsPassed()) {
+      if (!testingService.allTestsPassed(registry)) {
         chatService.errorLine(
           "Not committing changes, due to tests not passing",
         );
         return;
       }
     }
-    await commit("", registry);
+    await commit({ message: ""}, registry);
   }
 }

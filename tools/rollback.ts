@@ -1,33 +1,26 @@
 import ChatService from "@token-ring/chat/ChatService";
-import {FileSystemService} from "@token-ring/filesystem";
-import {Registry} from "@token-ring/registry";
-import {z} from "zod";
+import { FileSystemService } from "@token-ring/filesystem";
+import { Registry } from "@token-ring/registry";
+import { z } from "zod";
 
+export const name = "git/rollback";
 
 export async function execute(
   args: { commit?: string; steps?: number },
   registry: Registry,
-): Promise<string | { error: string }> {
+): Promise<string> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const fileSystem = registry.requireFirstServiceByType(FileSystemService);
   const toolName = "rollback";
 
-  // Check if there are uncommitted changes
-  try {
-    const {stdout: statusOutput} = await fileSystem.executeCommand([
-      "git",
-      "status",
-      "--porcelain",
-    ]);
-    if (statusOutput.trim()) {
-      chatService.errorLine(
-        `[${toolName}] There are uncommitted changes. Please commit or stash your changes before rollback.`,
-      );
-      return {error: "Rollback aborted: uncommitted changes detected"};
-    }
-  } catch (error: any) {
-    chatService.errorLine(`[${toolName}] Error checking git status: ${error.message}`);
-    return {error: `Rollback failed: ${error.message}`};
+  // Ensure there are no uncommitted changes
+  const { stdout: statusOutput } = await fileSystem.executeCommand([
+    "git",
+    "status",
+    "--porcelain",
+  ]);
+  if (statusOutput.trim() !== "") {
+    throw new Error(`[${name}] Rollback aborted: uncommitted changes detected`);
   }
 
   try {
@@ -55,10 +48,8 @@ export async function execute(
     fileSystem.setDirty(false);
     return "Successfully rolled back to previous state";
   } catch (error: any) {
-    chatService.errorLine(
-      `[${toolName}] Error during rollback: ${error.shortMessage || error.message}`,
-    );
-    return {error: `Rollback failed: ${error.shortMessage || error.message}`};
+    // Throw error directly without prior logging
+    throw new Error(`[${name}] Rollback failed: ${error.shortMessage || error.message}`);
   }
 }
 

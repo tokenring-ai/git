@@ -5,13 +5,13 @@ import {FileSystemService} from "@token-ring/filesystem";
 import type {Registry} from "@token-ring/registry";
 import {z} from "zod";
 
-// Tool name used for chat messages
-const TOOL_NAME = "git commit";
+// Exported tool name used for chat messages and identification
+export const name = "git/commit";
 
 export async function execute(
   args: { message?: string },
   registry: Registry,
-): Promise<string | { error: string }> {
+): Promise<string> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const chatMessageStorage =
     registry.requireFirstServiceByType(ChatMessageStorage);
@@ -25,7 +25,7 @@ export async function execute(
 
     if (!gitCommitMessage) {
       // If no message provided, generate one
-      chatService.infoLine(`[${TOOL_NAME}] Asking OpenAI to generate a git commit message...`);
+      chatService.infoLine(`[${name}] Asking OpenAI to generate a git commit message...`);
       gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
       if (currentMessage) {
         const request = await createChatRequest(
@@ -51,16 +51,16 @@ export async function execute(
           gitCommitMessage = output;
         } else {
           chatService.warningLine(
-            `[${TOOL_NAME}] AI did not provide a commit message, using default.`,
+            `[${name}] AI did not provide a commit message, using default.`,
           );
         }
       } else {
         chatService.errorLine(
-          `[${TOOL_NAME}] Most recent chat message does not have a response id, unable to generate a git commit message, using default.`,
+          `[${name}] Most recent chat message does not have a response id, unable to generate a git commit message, using default.`,
         );
       }
     } else {
-      chatService.infoLine(`[${TOOL_NAME}] Using provided commit message.`);
+      chatService.infoLine(`[${name}] Using provided commit message.`);
     }
 
     await fileSystem.executeCommand(["git", "add", "."]);
@@ -74,16 +74,15 @@ export async function execute(
       "-m",
       gitCommitMessage as string,
     ]);
-    chatService.systemLine(`[${TOOL_NAME}] Changes committed to git.`);
+    chatService.systemLine(`[${name}] Changes committed to git.`);
 
     fileSystem.setDirty(false);
     // Return only the result without tool name prefix
     return "Changes successfully committed to git";
   } catch (err: any) {
-    // Return errors in the specified format
     const message = err?.message ?? String(err);
-    chatService.errorLine(`[${TOOL_NAME}] ${message}`);
-    return {error: message} as { error: string };
+    // Throw errors instead of returning them
+    throw new Error(`[${name}] ${message}`);
   }
 }
 

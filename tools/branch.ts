@@ -3,11 +3,13 @@ import {FileSystemService} from "@token-ring/filesystem";
 import {Registry} from "@token-ring/registry";
 import {z} from "zod";
 
+// Export the tool name in the required format
+export const name = "git/branch";
 
 export async function execute(
   args: { action?: "list" | "create" | "switch" | "delete" | "current" | null; branchName?: string },
   registry: Registry,
-): Promise<string | { error: string }> {
+): Promise<string> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const fileSystem = registry.requireFirstServiceByType(FileSystemService);
 
@@ -18,55 +20,52 @@ export async function execute(
     switch (action) {
       case "list": {
         // List all branches
-        chatService.infoLine("[branch] Listing all branches...");
+        chatService.infoLine(`[${name}] Listing all branches...`);
         const {stdout} = await fileSystem.executeCommand([
           "git",
           "branch",
           "-a",
         ]);
-        chatService.systemLine("[branch] Branches:");
+        chatService.systemLine(`[${name}] Branches:`);
         stdout.split("\n").forEach((line: string) => {
           if (line.trim()) {
-            chatService.systemLine(`[branch]   ${line}`);
+            chatService.systemLine(`[${name}]   ${line}`);
           }
         });
         return "Branch list displayed successfully";
       }
       case "create":
         if (!branchName) {
-          chatService.errorLine("[branch] Branch name is required for create action");
-          return {error: "Create failed: no branch name provided"};
+          throw new Error(`[${name}] Branch name is required for create action`);
         }
         // Create a new branch
-        chatService.infoLine(`[branch] Creating new branch: ${branchName}...`);
+        chatService.infoLine(`[${name}] Creating new branch: ${branchName}...`);
         await fileSystem.executeCommand(["git", "checkout", "-b", branchName]);
         chatService.systemLine(
-          `[branch] Successfully created and switched to branch: ${branchName}`,
+          `[${name}] Successfully created and switched to branch: ${branchName}`,
         );
         return `Branch '${branchName}' created and checked out`;
 
       case "switch":
         if (!branchName) {
-          chatService.errorLine("[branch] Branch name is required for switch action");
-          return {error: "Switch failed: no branch name provided"};
+          throw new Error(`[${name}] Branch name is required for switch action`);
         }
         // Switch to existing branch
-        chatService.infoLine(`[branch] Switching to branch: ${branchName}...`);
+        chatService.infoLine(`[${name}] Switching to branch: ${branchName}...`);
         await fileSystem.executeCommand(["git", "checkout", branchName]);
         chatService.systemLine(
-          `[branch] Successfully switched to branch: ${branchName}`,
+          `[${name}] Successfully switched to branch: ${branchName}`,
         );
         return `Switched to branch '${branchName}'`;
 
       case "delete":
         if (!branchName) {
-          chatService.errorLine("[branch] Branch name is required for delete action");
-          return {error: "Delete failed: no branch name provided"};
+          throw new Error(`[${name}] Branch name is required for delete action`);
         }
         // Delete a branch
-        chatService.infoLine(`[branch] Deleting branch: ${branchName}...`);
+        chatService.infoLine(`[${name}] Deleting branch: ${branchName}...`);
         await fileSystem.executeCommand(["git", "branch", "-d", branchName]);
-        chatService.systemLine(`[branch] Successfully deleted branch: ${branchName}`);
+        chatService.systemLine(`[${name}] Successfully deleted branch: ${branchName}`);
         return `Branch '${branchName}' deleted`;
 
       case "current": {
@@ -77,7 +76,7 @@ export async function execute(
           "--show-current",
         ]);
         const current = (currentBranch as string).trim();
-        chatService.systemLine(`[branch] Current branch: ${current}`);
+        chatService.systemLine(`[${name}] Current branch: ${current}`);
         return `Current branch: ${current}`;
       }
       default: {
@@ -90,12 +89,12 @@ export async function execute(
         ]);
 
         chatService.systemLine(
-          `[branch] Current branch: ${(currentBranchDefault as string).trim()}`,
+          `[${name}] Current branch: ${(currentBranchDefault as string).trim()}`,
         );
-        chatService.systemLine("[branch] Local branches:");
+        chatService.systemLine(`[${name}] Local branches:`);
         (branches as string).split("\n").forEach((line: string) => {
           if (line.trim()) {
-            chatService.systemLine(`[branch]   ${line}`);
+            chatService.systemLine(`[${name}]   ${line}`);
           }
         });
         return "Branch information displayed successfully";
@@ -103,8 +102,8 @@ export async function execute(
     }
   } catch (error: any) {
     const message = error.shortMessage || error.message || "Unknown error";
-    chatService.errorLine(`[branch] Error with git branch operation: ${message}`);
-    return {error: `Branch operation failed: ${message}`};
+    // Throw the error directly without prior logging
+    throw new Error(`[${name}] ${message}`);
   }
 }
 
