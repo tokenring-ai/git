@@ -1,9 +1,9 @@
-import ChatService from "@token-ring/chat/ChatService";
-import ModelRegistry from "@token-ring/ai-client/ModelRegistry";
-import {FileSystemService} from "@token-ring/filesystem";
 import {ChatMessageStorage, createChatRequest} from "@token-ring/ai-client";
-import {z} from "zod";
+import ModelRegistry from "@token-ring/ai-client/ModelRegistry";
+import ChatService from "@token-ring/chat/ChatService";
+import {FileSystemService} from "@token-ring/filesystem";
 import type {Registry} from "@token-ring/registry";
+import {z} from "zod";
 
 // Tool name used for chat messages
 const TOOL_NAME = "git commit";
@@ -11,7 +11,7 @@ const TOOL_NAME = "git commit";
 export async function execute(
   args: { message?: string },
   registry: Registry,
-)  : Promise<string|{ error: string}> {
+): Promise<string | { error: string }> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const chatMessageStorage =
     registry.requireFirstServiceByType(ChatMessageStorage);
@@ -63,7 +63,7 @@ export async function execute(
       chatService.infoLine(`[${TOOL_NAME}] Using provided commit message.`);
     }
 
-    await fileSystem.executeCommand(["git", "add", "." ]);
+    await fileSystem.executeCommand(["git", "add", "."]);
     await fileSystem.executeCommand([
       "git",
       "-c",
@@ -83,7 +83,7 @@ export async function execute(
     // Return errors in the specified format
     const message = err?.message ?? String(err);
     chatService.errorLine(`[${TOOL_NAME}] ${message}`);
-    return { error: message } as { error: string };
+    return {error: message} as { error: string };
   }
 }
 

@@ -1,4 +1,4 @@
-export { default as GitService } from "./GitService.ts";
+export {default as GitService} from "./GitService.ts";
 export * as chatCommands from "./chatCommands.ts";
 export * as tools from "./tools.ts";
 

@@ -1,8 +1,8 @@
 import ChatService from "@token-ring/chat/ChatService";
+import {Registry} from "@token-ring/registry";
+import {execute as branch} from "../tools/branch.ts";
 import {execute as commit} from "../tools/commit.ts";
 import {execute as rollback} from "../tools/rollback.ts";
-import {execute as branch} from "../tools/branch.ts";
-import {Registry} from "@token-ring/registry";
 
 /**
  * Combined git commit/rollback/branch command
@@ -47,7 +47,7 @@ export async function execute(remainder: string, registry: Registry) {
           return;
         }
       }
-      await rollback({ steps }, registry);
+      await rollback({steps}, registry);
       break;
     }
     case "branch": {
