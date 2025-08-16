@@ -5,76 +5,86 @@ import {ChatMessageStorage, createChatRequest} from "@token-ring/ai-client";
 import {z} from "zod";
 import type {Registry} from "@token-ring/registry";
 
+// Tool name used for chat messages
+const TOOL_NAME = "git commit";
 
 export async function execute(
   args: { message?: string },
   registry: Registry,
-) {
+)  : Promise<string|{ error: string}> {
   const chatService = registry.requireFirstServiceByType(ChatService);
   const chatMessageStorage =
     registry.requireFirstServiceByType(ChatMessageStorage);
   const fileSystem = registry.requireFirstServiceByType(FileSystemService);
   const modelRegistry = registry.requireFirstServiceByType(ModelRegistry);
 
-  const currentMessage = chatMessageStorage.getCurrentMessage();
+  try {
+    const currentMessage = chatMessageStorage.getCurrentMessage();
 
-  let gitCommitMessage = args.message; // Use provided message if available
+    let gitCommitMessage = args.message; // Use provided message if available
 
-  if (!gitCommitMessage) {
-    // If no message provided, generate one
-    chatService.infoLine("Asking OpenAI to generate a git commit message...");
-    gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
-    if (currentMessage) {
-      const request = await createChatRequest(
-        {
-          input: {
-            role: "user",
-            content:
-              "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
+    if (!gitCommitMessage) {
+      // If no message provided, generate one
+      chatService.infoLine(`[${TOOL_NAME}] Asking OpenAI to generate a git commit message...`);
+      gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
+      if (currentMessage) {
+        const request = await createChatRequest(
+          {
+            input: {
+              role: "user",
+              content:
+                "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
+            },
           },
-        },
-        registry,
-      );
+          registry,
+        );
 
-      // Keep only the last two messages (system/user) if present
-      request.messages.splice(0, request.messages.length - 2);
+        // Keep only the last two messages (system/user) if present
+        request.messages.splice(0, request.messages.length - 2);
 
-      delete (request as any).tools;
+        delete (request as any).tools;
 
-      const client = await modelRegistry.chat.getFirstOnlineClient('auto');
-      const [output] = await client.textChat(request, registry);
-      if (output && output.trim() !== "") {
-        // Ensure AI provides a non-empty message
-        gitCommitMessage = output;
+        const client = await modelRegistry.chat.getFirstOnlineClient('auto');
+        const [output] = await client.textChat(request, registry);
+        if (output && output.trim() !== "") {
+          // Ensure AI provides a non-empty message
+          gitCommitMessage = output;
+        } else {
+          chatService.warningLine(
+            `[${TOOL_NAME}] AI did not provide a commit message, using default.`,
+          );
+        }
       } else {
-        chatService.warningLine(
-          "AI did not provide a commit message, using default.",
+        chatService.errorLine(
+          `[${TOOL_NAME}] Most recent chat message does not have a response id, unable to generate a git commit message, using default.`,
         );
       }
     } else {
-      chatService.errorLine(
-        "Most recent chat message does not have a response id, unable to generate a git commit message, using default.",
-      );
+      chatService.infoLine(`[${TOOL_NAME}] Using provided commit message.`);
     }
-  } else {
-    chatService.infoLine("Using provided commit message.");
+
+    await fileSystem.executeCommand(["git", "add", "." ]);
+    await fileSystem.executeCommand([
+      "git",
+      "-c",
+      "user.name=TokenRing Coder",
+      "-c",
+      "user.email=coder@tokenring.ai",
+      "commit",
+      "-m",
+      gitCommitMessage as string,
+    ]);
+    chatService.systemLine(`[${TOOL_NAME}] Changes committed to git.`);
+
+    fileSystem.setDirty(false);
+    // Return only the result without tool name prefix
+    return "Changes successfully committed to git";
+  } catch (err: any) {
+    // Return errors in the specified format
+    const message = err?.message ?? String(err);
+    chatService.errorLine(`[${TOOL_NAME}] ${message}`);
+    return { error: message } as { error: string };
   }
-
-  await fileSystem.executeCommand(["git", "add", "." ]);
-  await fileSystem.executeCommand([
-    "git",
-    "-c",
-    "user.name=TokenRing Coder",
-    "-c",
-    "user.email=coder@tokenring.ai",
-    "commit",
-    "-m",
-    gitCommitMessage as string,
-  ]);
-  chatService.systemLine("Changes committed to git.");
-
-  fileSystem.setDirty(false);
-  return "Changes successfully committed to git";
 }
 
 export const description = "Commits changes in the source directory to git.";
