@@ -13,7 +13,6 @@ export async function execute(
   const chatService = registry.requireFirstServiceByType(ChatService);
   const fileSystem = registry.requireFirstServiceByType(FileSystemService);
 
-  try {
     const action = args.action;
     const branchName = args.branchName;
 
@@ -100,11 +99,6 @@ export async function execute(
         return "Branch information displayed successfully";
       }
     }
-  } catch (error: any) {
-    const message = error.shortMessage || error.message || "Unknown error";
-    // Throw the error directly without prior logging
-    throw new Error(`[${name}] ${message}`);
-  }
 }
 
 export const description =

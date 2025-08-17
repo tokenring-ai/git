@@ -18,7 +18,6 @@ export async function execute(
   const fileSystem = registry.requireFirstServiceByType(FileSystemService);
   const modelRegistry = registry.requireFirstServiceByType(ModelRegistry);
 
-  try {
     const currentMessage = chatMessageStorage.getCurrentMessage();
 
     let gitCommitMessage = args.message; // Use provided message if available
@@ -79,11 +78,6 @@ export async function execute(
     fileSystem.setDirty(false);
     // Return only the result without tool name prefix
     return "Changes successfully committed to git";
-  } catch (err: any) {
-    const message = err?.message ?? String(err);
-    // Throw errors instead of returning them
-    throw new Error(`[${name}] ${message}`);
-  }
 }
 
 export const description = "Commits changes in the source directory to git.";
