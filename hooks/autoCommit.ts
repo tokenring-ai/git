@@ -22,6 +22,6 @@ export async function afterTesting(registry: Registry): Promise<void> {
         return;
       }
     }
-    await commit({ message: ""}, registry);
+    await commit({message: ""}, registry);
   }
 }

@@ -1,0 +1,1 @@
+export * as autoCommit from "./hooks/autoCommit.ts";

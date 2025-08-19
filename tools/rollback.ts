@@ -1,7 +1,7 @@
 import ChatService from "@token-ring/chat/ChatService";
-import { FileSystemService } from "@token-ring/filesystem";
-import { Registry } from "@token-ring/registry";
-import { z } from "zod";
+import {FileSystemService} from "@token-ring/filesystem";
+import {Registry} from "@token-ring/registry";
+import {z} from "zod";
 
 export const name = "git/rollback";
 
@@ -14,7 +14,7 @@ export async function execute(
   const toolName = "rollback";
 
   // Ensure there are no uncommitted changes
-  const { stdout: statusOutput } = await fileSystem.executeCommand([
+  const {stdout: statusOutput} = await fileSystem.executeCommand([
     "git",
     "status",
     "--porcelain",
@@ -55,7 +55,7 @@ export async function execute(
 
 export const description = "Rolls back to a previous git commit.";
 
-export const parameters = z.object({
+export const inputSchema = z.object({
   commit: z.string().describe("The commit hash to rollback to").optional(),
   steps: z.number().int().describe("Number of commits to roll back").optional(),
 });

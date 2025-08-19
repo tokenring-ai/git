@@ -90,6 +90,7 @@ export async function execute(remainder: string, registry: Registry) {
   }
 }
 
+// noinspection JSUnusedGlobalSymbols
 export function help() {
   return [
     "/git <commit|rollback|branch> [options]",
