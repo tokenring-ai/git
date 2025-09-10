@@ -1,9 +1,9 @@
-@token-ring/git
+@tokenring-ai/git
 =================
 
 Overview
 
-- @token-ring/git provides Git integration for the Token Ring ecosystem. It exposes programmatic tools for common Git
+- @tokenring-ai/git provides Git integration for the Token Ring ecosystem. It exposes programmatic tools for common Git
   operations (commit, rollback, branch management) and a combined chat command (/git) to drive these operations
   interactively.
 
@@ -28,9 +28,9 @@ Exports
 Installation
 This package is part of the monorepo and is typically consumed by the Token Ring runtime. If you need it directly:
 
-- npm: npm install @token-ring/git
-- pnpm: pnpm add @token-ring/git
-- bun: bun add @token-ring/git
+- npm: npm install @tokenring-ai/git
+- pnpm: pnpm add @tokenring-ai/git
+- bun: bun add @tokenring-ai/git
 
 Requirements
 
@@ -38,7 +38,7 @@ Requirements
 - Execute commands inside a Git repository (working tree present).
 - Tools use FileSystemService to run commands and ChatService to report progress/errors. Register these services in your
   ServiceRegistry.
-- The commit tool can optionally generate a commit message using @token-ring/ai-client when no message is provided;
+- The commit tool can optionally generate a commit message using @tokenring-ai/ai-client when no message is provided;
   ensure ModelRegistry and ChatMessageStorage are registered for this feature.
 
 Tools
@@ -112,11 +112,11 @@ Chat Command: /git (commands/git.ts)
 - /git branch <action> [branchName]
 
 Quick Start (programmatic)
-import { ServiceRegistry } from "@token-ring/registry";
-import ChatService from "@token-ring/chat/ChatService";
-import { FileSystemService } from "@token-ring/filesystem";
-import ModelRegistry from "@token-ring/ai-client/ModelRegistry"; // for AI commit messages
-import { chatCommands, tools } from "@token-ring/git";
+import { ServiceRegistry } from "@tokenring-ai/registry";
+import ChatService from "@tokenring-ai/chat/ChatService";
+import { FileSystemService } from "@tokenring-ai/filesystem";
+import ModelRegistry from "@tokenring-ai/ai-client/ModelRegistry"; // for AI commit messages
+import { chatCommands, tools } from "@tokenring-ai/git";
 
 const registry = new ServiceRegistry();
 registry.registerService(new ChatService());
@@ -126,14 +126,14 @@ registry.registerService(new ModelRegistry()); // needed if you want AI-generate
 // Commit with explicit message
 await tools.commitTool.execute({ message: "Update docs" }, registry);
 
-// Or use the chat command router (see @token-ring/chat runCommand helper)
+// Or use the chat command router (see @tokenring-ai/chat runCommand helper)
 // e.g., runCommand("git", "commit Update docs", registry)
 
 // Rollback last commit
 await tools.rollbackTool.execute({ steps: 1 }, registry);
 
 // Branch operations
-await (await import("@token-ring/git/tools/branch")).execute({ action: "list" }, registry);
+await (await import("@tokenring-ai/git/tools/branch")).execute({ action: "list" }, registry);
 
 Notes
 

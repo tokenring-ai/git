@@ -1,27 +1,25 @@
-import ChatService from "@token-ring/chat/ChatService";
-import FileSystemService from "@token-ring/filesystem/FileSystemService";
-import {Registry} from "@token-ring/registry";
-import TestingService from "@token-ring/testing/TestingService";
+import Agent from "@tokenring-ai/agent/Agent";
+import FileSystemService from "@tokenring-ai/filesystem/FileSystemService";
+import TestingService from "@tokenring-ai/testing/TestingService";
 import {execute as commit} from "../tools/commit.ts";
 
 
 export const description =
   "Automatically commit changes to the source directory to git";
 
-export async function afterTesting(registry: Registry): Promise<void> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
+export async function afterTesting(agent: Agent): Promise<void> {
 
-  const filesystem = registry.requireFirstServiceByType(FileSystemService);
+  const filesystem = agent.requireFirstServiceByType(FileSystemService);
   if (filesystem.dirty) {
-    const testingServices = registry.services.getServicesByType(TestingService);
+    const testingServices = agent.team.services.getItemsByType(TestingService);
     for (const testingService of testingServices) {
-      if (!testingService.allTestsPassed(registry)) {
-        chatService.errorLine(
+      if (!testingService.allTestsPassed(agent)) {
+        agent.errorLine(
           "Not committing changes, due to tests not passing",
         );
         return;
       }
     }
-    await commit({message: ""}, registry);
+    await commit({message: ""}, agent);
   }
 }

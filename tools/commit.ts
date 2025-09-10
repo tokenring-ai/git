@@ -1,8 +1,8 @@
-import {ChatMessageStorage, createChatRequest} from "@token-ring/ai-client";
-import ModelRegistry from "@token-ring/ai-client/ModelRegistry";
-import ChatService from "@token-ring/chat/ChatService";
-import {FileSystemService} from "@token-ring/filesystem";
-import type {Registry} from "@token-ring/registry";
+import Agent from "@tokenring-ai/agent/Agent";
+import {ChatMessageStorage, createChatRequest} from "@tokenring-ai/ai-client";
+import AIService from "@tokenring-ai/ai-client/AIService";
+import ModelRegistry from "@tokenring-ai/ai-client/ModelRegistry";
+import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
 // Exported tool name used for chat messages and identification
@@ -10,13 +10,13 @@ export const name = "git/commit";
 
 export async function execute(
   args: { message?: string },
-  registry: Registry,
+  agent: Agent,
 ): Promise<string> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
   const chatMessageStorage =
-    registry.requireFirstServiceByType(ChatMessageStorage);
-  const fileSystem = registry.requireFirstServiceByType(FileSystemService);
-  const modelRegistry = registry.requireFirstServiceByType(ModelRegistry);
+    agent.requireFirstServiceByType(ChatMessageStorage);
+  const fileSystem = agent.requireFirstServiceByType(FileSystemService);
+  const modelRegistry = agent.requireFirstServiceByType(ModelRegistry);
+  const aiService = agent.requireFirstServiceByType(AIService);
 
   const currentMessage = chatMessageStorage.getCurrentMessage();
 
@@ -24,18 +24,21 @@ export async function execute(
 
   if (!gitCommitMessage) {
     // If no message provided, generate one
-    chatService.infoLine(`[${name}] Asking OpenAI to generate a git commit message...`);
+    agent.infoLine(`[${name}] Asking OpenAI to generate a git commit message...`);
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
     if (currentMessage) {
+      const {model, ...requestOptions} = aiService.getAIConfig(agent);
+
       const request = await createChatRequest(
         {
+          ...requestOptions,
           input: {
             role: "user",
             content:
               "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
           },
         },
-        registry,
+        agent,
       );
 
       // Keep only the last two messages (system/user) if present
@@ -43,23 +46,23 @@ export async function execute(
 
       delete (request as any).tools;
 
-      const client = await modelRegistry.chat.getFirstOnlineClient('auto');
-      const [output] = await client.textChat(request, registry);
+      const client = await modelRegistry.chat.getFirstOnlineClient(model);
+      const [output] = await client.textChat(request, agent);
       if (output && output.trim() !== "") {
         // Ensure AI provides a non-empty message
         gitCommitMessage = output;
       } else {
-        chatService.warningLine(
+        agent.warningLine(
           `[${name}] AI did not provide a commit message, using default.`,
         );
       }
     } else {
-      chatService.errorLine(
+      agent.errorLine(
         `[${name}] Most recent chat message does not have a response id, unable to generate a git commit message, using default.`,
       );
     }
   } else {
-    chatService.infoLine(`[${name}] Using provided commit message.`);
+    agent.infoLine(`[${name}] Using provided commit message.`);
   }
 
   await fileSystem.executeCommand(["git", "add", "."]);
@@ -73,7 +76,7 @@ export async function execute(
     "-m",
     gitCommitMessage as string,
   ]);
-  chatService.systemLine(`[${name}] Changes committed to git.`);
+  agent.infoLine(`[${name}] Changes committed to git.`);
 
   fileSystem.setDirty(false);
   // Return only the result without tool name prefix

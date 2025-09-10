@@ -1,14 +1,13 @@
 {
- "name": "@token-ring/git",
+ "name": "@tokenring-ai/git",
  "description": "TokenRing Coder Git Intregration",
  "version": "0.1.0",
  "dependencies": {
-  "@token-ring/ai-client": "0.1.0",
-  "@token-ring/chat": "0.1.0",
-  "@token-ring/filesystem": "0.1.0",
-  "@token-ring/registry": "0.1.0",
-  "@token-ring/testing": "0.1.0",
-  "@token-ring/utility": "0.1.0",
+  "@tokenring-ai/ai-client": "0.1.0",
+  "@tokenring-ai/agent": "0.1.0",
+  "@tokenring-ai/filesystem": "0.1.0",
+  "@tokenring-ai/testing": "0.1.0",
+  "@tokenring-ai/utility": "0.1.0",
   "execa": "^9.6.0"
  },
  "exports": {

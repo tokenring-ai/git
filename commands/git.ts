@@ -1,5 +1,4 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {Registry} from "@token-ring/registry";
+import Agent from "@tokenring-ai/agent/Agent";
 import {execute as branch} from "../tools/branch.ts";
 import {execute as commit} from "../tools/commit.ts";
 import {execute as rollback} from "../tools/rollback.ts";
@@ -12,11 +11,10 @@ import {execute as rollback} from "../tools/rollback.ts";
 export const description =
   "/git <commit|rollback|branch> [options] - Git operations. Use 'commit' to commit changes, 'rollback [position]' to rollback by [position] commits (default: 1), 'branch [options]' for branch management.";
 
-export async function execute(remainder: string, registry: Registry) {
-  const chatService = registry.requireFirstServiceByType(ChatService);
+export async function execute(remainder: string, agent: Agent) {
 
   if (!remainder || !remainder.trim()) {
-    chatService.errorLine("Usage: /git <commit|rollback|branch> [options]");
+    agent.errorLine("Usage: /git <commit|rollback|branch> [options]");
     return;
   }
 
@@ -31,7 +29,7 @@ export async function execute(remainder: string, registry: Registry) {
         // Join all remaining arguments as the commit message
         commitArgs.message = args.slice(1).join(" ");
       }
-      await commit(commitArgs, registry);
+      await commit(commitArgs, agent);
       break;
     }
     case "rollback": {
@@ -41,13 +39,13 @@ export async function execute(remainder: string, registry: Registry) {
         if (!isNaN(parsed) && parsed > 0) {
           steps = parsed;
         } else {
-          chatService.errorLine(
+          agent.errorLine(
             `Invalid rollback position: "${args[1]}". Must be a positive integer.`,
           );
           return;
         }
       }
-      await rollback({steps}, registry);
+      await rollback({steps}, agent);
       break;
     }
     case "branch": {
@@ -72,18 +70,18 @@ export async function execute(remainder: string, registry: Registry) {
             branchArgs.branchName = branchName;
           }
         } else {
-          chatService.errorLine(
+          agent.errorLine(
             `Invalid branch action: "${branchAction}". Valid actions are: list, current, create, switch, delete`,
           );
           return;
         }
       }
-      await branch(branchArgs as any, registry);
+      await branch(branchArgs as any, agent);
       break;
     }
 
     default:
-      chatService.errorLine(
+      agent.errorLine(
         `Unknown git action: "${action}". Use 'commit', 'rollback', or 'branch'.`,
       );
       break;

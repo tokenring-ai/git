@@ -1,16 +1,14 @@
-import ChatService from "@token-ring/chat/ChatService";
-import {FileSystemService} from "@token-ring/filesystem";
-import {Registry} from "@token-ring/registry";
+import Agent from "@tokenring-ai/agent/Agent";
+import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
 export const name = "git/rollback";
 
 export async function execute(
   args: { commit?: string; steps?: number },
-  registry: Registry,
+  agent: Agent,
 ): Promise<string> {
-  const chatService = registry.requireFirstServiceByType(ChatService);
-  const fileSystem = registry.requireFirstServiceByType(FileSystemService);
+  const fileSystem = agent.requireFirstServiceByType(FileSystemService);
   const toolName = "rollback";
 
   // Ensure there are no uncommitted changes
@@ -27,11 +25,11 @@ export async function execute(
     // Determine which commit to rollback to
     if (args.commit) {
       // Rollback to specific commit
-      chatService.infoLine(`[${toolName}] Rolling back to commit ${args.commit}...`);
+      agent.infoLine(`[${toolName}] Rolling back to commit ${args.commit}...`);
       await fileSystem.executeCommand(["git", "reset", "--hard", args.commit]);
     } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
       // Rollback by a number of steps
-      chatService.infoLine(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
+      agent.infoLine(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
       await fileSystem.executeCommand([
         "git",
         "reset",
@@ -40,11 +38,11 @@ export async function execute(
       ]);
     } else {
       // Default: rollback one commit
-      chatService.infoLine(`[${toolName}] Rolling back to previous commit...`);
+      agent.infoLine(`[${toolName}] Rolling back to previous commit...`);
       await fileSystem.executeCommand(["git", "reset", "--hard", "HEAD~1"]);
     }
 
-    chatService.systemLine(`[${toolName}] Rollback completed successfully.`);
+    agent.infoLine(`[${toolName}] Rollback completed successfully.`);
     fileSystem.setDirty(false);
     return "Successfully rolled back to previous state";
   } catch (error: any) {
