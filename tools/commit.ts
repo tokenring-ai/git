@@ -27,7 +27,8 @@ export async function execute(
     agent.infoLine(`[${name}] Asking OpenAI to generate a git commit message...`);
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
     if (currentMessage) {
-      const {model, ...requestOptions} = aiService.getAIConfig(agent);
+      const requestOptions = aiService.getAIConfig(agent);
+      const model = aiService.getModel();
 
       const request = await createChatRequest(
         {
