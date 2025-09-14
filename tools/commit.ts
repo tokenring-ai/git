@@ -1,5 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
-import {ChatMessageStorage, createChatRequest} from "@tokenring-ai/ai-client";
+import {createChatRequest} from "@tokenring-ai/ai-client";
 import AIService from "@tokenring-ai/ai-client/AIService";
 import ModelRegistry from "@tokenring-ai/ai-client/ModelRegistry";
 import {FileSystemService} from "@tokenring-ai/filesystem";
@@ -12,13 +12,11 @@ export async function execute(
   args: { message?: string },
   agent: Agent,
 ): Promise<string> {
-  const chatMessageStorage =
-    agent.requireFirstServiceByType(ChatMessageStorage);
   const fileSystem = agent.requireFirstServiceByType(FileSystemService);
   const modelRegistry = agent.requireFirstServiceByType(ModelRegistry);
   const aiService = agent.requireFirstServiceByType(AIService);
 
-  const currentMessage = chatMessageStorage.getCurrentMessage();
+  const currentMessage = aiService.getCurrentMessage(agent);
 
   let gitCommitMessage = args.message; // Use provided message if available
 
@@ -45,7 +43,7 @@ export async function execute(
       // Keep only the last two messages (system/user) if present
       request.messages.splice(0, request.messages.length - 2);
 
-      delete (request as any).tools;
+      request.tools = {};
 
       const client = await modelRegistry.chat.getFirstOnlineClient(model);
       const [output] = await client.textChat(request, agent);
@@ -75,7 +73,7 @@ export async function execute(
     "user.email=coder@tokenring.ai",
     "commit",
     "-m",
-    gitCommitMessage as string,
+    gitCommitMessage,
   ]);
   agent.infoLine(`[${name}] Changes committed to git.`);
 

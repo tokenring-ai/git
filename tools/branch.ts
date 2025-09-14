@@ -72,7 +72,7 @@ export async function execute(
         "branch",
         "--show-current",
       ]);
-      const current = (currentBranch as string).trim();
+      const current = (currentBranch).trim();
       agent.infoLine(`[${name}] Current branch: ${current}`);
       return `Current branch: ${current}`;
     }
@@ -86,10 +86,10 @@ export async function execute(
       ]);
 
       agent.infoLine(
-        `[${name}] Current branch: ${(currentBranchDefault as string).trim()}`,
+        `[${name}] Current branch: ${(currentBranchDefault).trim()}`,
       );
       agent.infoLine(`[${name}] Local branches:`);
-      (branches as string).split("\n").forEach((line: string) => {
+      (branches).split("\n").forEach((line: string) => {
         if (line.trim()) {
           agent.infoLine(`[${name}]   ${line}`);
         }

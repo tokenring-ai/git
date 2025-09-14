@@ -50,7 +50,7 @@ export async function execute(remainder: string, agent: Agent) {
     }
     case "branch": {
       // Parse branch arguments
-      const branchArgs: { action?: string | null; branchName?: string } = {};
+      const branchArgs: { action?: "list" | "create" | "switch" | "delete" | "current" | null; branchName?: string } = {};
       if (args.length === 1) {
         // No additional arguments - show current branch and list local branches (default behavior)
         branchArgs.action = null; // Will trigger default case
@@ -65,7 +65,7 @@ export async function execute(remainder: string, agent: Agent) {
           "switch",
           "delete",
         ].includes(branchAction)) {
-          branchArgs.action = branchAction;
+          branchArgs.action = branchAction as (typeof branchArgs)["action"];
           if (branchName) {
             branchArgs.branchName = branchName;
           }
@@ -76,7 +76,7 @@ export async function execute(remainder: string, agent: Agent) {
           return;
         }
       }
-      await branch(branchArgs as any, agent);
+      await branch(branchArgs, agent);
       break;
     }
 
