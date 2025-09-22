@@ -12,9 +12,9 @@ export async function execute(
   args: { message?: string },
   agent: Agent,
 ): Promise<string> {
-  const fileSystem = agent.requireFirstServiceByType(FileSystemService);
-  const modelRegistry = agent.requireFirstServiceByType(ModelRegistry);
-  const aiService = agent.requireFirstServiceByType(AIService);
+  const fileSystem = agent.requireServiceByType(FileSystemService);
+  const modelRegistry = agent.requireServiceByType(ModelRegistry);
+  const aiService = agent.requireServiceByType(AIService);
 
   const currentMessage = aiService.getCurrentMessage(agent);
 

@@ -8,7 +8,7 @@ export async function execute(
   args: { commit?: string; steps?: number },
   agent: Agent,
 ): Promise<string> {
-  const fileSystem = agent.requireFirstServiceByType(FileSystemService);
+  const fileSystem = agent.requireServiceByType(FileSystemService);
   const toolName = "rollback";
 
   // Ensure there are no uncommitted changes

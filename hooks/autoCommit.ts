@@ -8,17 +8,14 @@ export const description =
   "Automatically commit changes to the source directory to git";
 
 export async function afterTesting(agent: Agent): Promise<void> {
-
-  const filesystem = agent.requireFirstServiceByType(FileSystemService);
+  const testingService = agent.requireServiceByType(TestingService);
+  const filesystem = agent.requireServiceByType(FileSystemService);
   if (filesystem.dirty) {
-    const testingServices = agent.team.services.getItemsByType(TestingService);
-    for (const testingService of testingServices) {
-      if (!testingService.allTestsPassed(agent)) {
-        agent.errorLine(
-          "Not committing changes, due to tests not passing",
-        );
-        return;
-      }
+    if (!testingService.allTestsPassed(agent)) {
+      agent.errorLine(
+        "Not committing changes, due to tests not passing",
+      );
+      return;
     }
     await commit({message: ""}, agent);
   }

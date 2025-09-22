@@ -9,7 +9,7 @@ export async function execute(
   args: { action?: "list" | "create" | "switch" | "delete" | "current" | null; branchName?: string },
   agent: Agent,
 ): Promise<string> {
-  const fileSystem = agent.requireFirstServiceByType(FileSystemService);
+  const fileSystem = agent.requireServiceByType(FileSystemService);
 
   const action = args.action;
   const branchName = args.branchName;
