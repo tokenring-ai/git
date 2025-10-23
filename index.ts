@@ -8,14 +8,14 @@ import * as tools from "./tools.ts";
 export {default as GitService} from "./GitService.ts";
 
 
-export const packageInfo: TokenRingPackage = {
+export default {
   name: packageJSON.name,
   version: packageJSON.version,
   description: packageJSON.description,
   install(agentTeam: AgentTeam) {
-    agentTeam.addTools(packageInfo, tools)
+    agentTeam.addTools(packageJSON.name, tools)
     agentTeam.addChatCommands(chatCommands);
     agentTeam.addServices(new GitService());
-    agentTeam.addHooks(packageInfo, hooks);
+    agentTeam.addHooks(packageJSON.name, hooks);
   },
-};
+} as TokenRingPackage;
