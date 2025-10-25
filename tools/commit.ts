@@ -1,6 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
-import {createChatRequest} from "@tokenring-ai/ai-client";
-import AIService from "@tokenring-ai/ai-client/AIService";
+import {AIService, createChatRequest} from "@tokenring-ai/ai-client";
 import ModelRegistry from "@tokenring-ai/ai-client/ModelRegistry";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
