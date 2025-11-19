@@ -1,6 +1,6 @@
 import Agent from "@tokenring-ai/agent/Agent";
-import {AIService, createChatRequest} from "@tokenring-ai/ai-client";
 import ModelRegistry from "@tokenring-ai/ai-client/ModelRegistry";
+import {ChatService, createChatRequest} from "@tokenring-ai/chat";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
@@ -13,9 +13,9 @@ export async function execute(
 ): Promise<string> {
   const fileSystem = agent.requireServiceByType(FileSystemService);
   const modelRegistry = agent.requireServiceByType(ModelRegistry);
-  const aiService = agent.requireServiceByType(AIService);
+  const chatService = agent.requireServiceByType(ChatService);
 
-  const currentMessage = aiService.getCurrentMessage(agent);
+  const currentMessage = chatService.getCurrentMessage(agent);
 
   let gitCommitMessage = args.message; // Use provided message if available
 
@@ -24,8 +24,8 @@ export async function execute(
     agent.infoLine(`[${name}] Asking OpenAI to generate a git commit message...`);
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
     if (currentMessage) {
-      const requestOptions = aiService.getAIConfig(agent);
-      const model = aiService.getModel(agent);
+      const requestOptions = chatService.getChatConfig(agent);
+      const model = chatService.getModel(agent);
 
       const request = await createChatRequest(
         {

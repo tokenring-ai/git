@@ -3,7 +3,7 @@
  "description": "TokenRing Coder Git Intregration",
  "version": "0.1.0",
  "dependencies": {
-  "@tokenring-ai/ai-client": "0.1.0",
+  "@tokenring-ai/chat": "0.1.0",
   "@tokenring-ai/agent": "0.1.0",
   "@tokenring-ai/filesystem": "0.1.0",
   "@tokenring-ai/testing": "0.1.0",
