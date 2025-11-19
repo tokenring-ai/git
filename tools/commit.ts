@@ -25,7 +25,7 @@ export async function execute(
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
     if (currentMessage) {
       const requestOptions = aiService.getAIConfig(agent);
-      const model = aiService.getModel();
+      const model = aiService.getModel(agent);
 
       const request = await createChatRequest(
         {
