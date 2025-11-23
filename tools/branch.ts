@@ -1,12 +1,13 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
 // Export the tool name in the required format
-export const name = "git/branch";
+const name = "git/branch";
 
 export async function execute(
-  args: { action?: "list" | "create" | "switch" | "delete" | "current" | null; branchName?: string },
+  args: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<string> {
   const fileSystem = agent.requireServiceByType(FileSystemService);
@@ -99,9 +100,9 @@ export async function execute(
   }
 }
 
-export const description =
+const description =
   "Manages git branches - list, create, switch, or delete branches.";
-export const inputSchema = z.object({
+const inputSchema = z.object({
   action: z
     .enum(["list", "create", "switch", "delete", "current"])
     .describe("The branch action to perform"),
@@ -112,3 +113,7 @@ export const inputSchema = z.object({
     )
     .optional(),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

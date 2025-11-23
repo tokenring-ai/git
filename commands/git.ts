@@ -1,4 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingAgentCommand} from "@tokenring-ai/agent/types";
 import {execute as branch} from "../tools/branch.ts";
 import {execute as commit} from "../tools/commit.ts";
 import {execute as rollback} from "../tools/rollback.ts";
@@ -8,10 +9,10 @@ import {execute as rollback} from "../tools/rollback.ts";
  * Usage: /git commit | /git rollback [position] | /git branch [options]
  */
 
-export const description =
+const description =
   "/git <commit|rollback|branch> [options] - Git operations. Use 'commit' to commit changes, 'rollback [position]' to rollback by [position] commits (default: 1), 'branch [options]' for branch management.";
 
-export async function execute(remainder: string, agent: Agent) {
+async function execute(remainder: string, agent: Agent) {
 
   if (!remainder || !remainder.trim()) {
     agent.errorLine("Usage: /git <commit|rollback|branch> [options]");
@@ -49,37 +50,28 @@ export async function execute(remainder: string, agent: Agent) {
       break;
     }
     case "branch": {
-      // Parse branch arguments
-      const branchArgs: {
-        action?: "list" | "create" | "switch" | "delete" | "current" | null;
-        branchName?: string
-      } = {};
-      if (args.length === 1) {
-        // No additional arguments - show current branch and list local branches (default behavior)
-        branchArgs.action = null; // Will trigger default case
-      } else {
-        const branchAction = args[1];
-        const branchName = args[2];
+      let action: "list" | "create" | "switch" | "delete" | "current" | null = null;
 
-        if ([
-          "list",
-          "current",
-          "create",
-          "switch",
-          "delete",
-        ].includes(branchAction)) {
-          branchArgs.action = branchAction as (typeof branchArgs)["action"];
-          if (branchName) {
-            branchArgs.branchName = branchName;
-          }
-        } else {
-          agent.errorLine(
-            `Invalid branch action: "${branchAction}". Valid actions are: list, current, create, switch, delete`,
-          );
-          return;
+      if (args.length > 1) {
+        switch (args[1]) {
+          case "list":
+          case "current":
+          case "create":
+          case "switch":
+          case "delete":
+            action = args[1];
+            break;
+          default:
+            agent.errorLine(
+              `Invalid branch action: "${args[1]}". Valid actions are: list, current, create, switch, delete`,
+            );
+            return;
         }
+
+        await branch({action, branchName: args[2]}, agent);
+      } else {
+        await branch({action: "list"}, agent);
       }
-      await branch(branchArgs, agent);
       break;
     }
 
@@ -113,3 +105,8 @@ export function help() {
     "    /git branch delete feature-xyz",
   ];
 }
+export default {
+  description,
+  execute,
+  help,
+} as TokenRingAgentCommand

@@ -1,1 +1,1 @@
-export * as git from "./commands/git.ts";
+export {default as git} from "./commands/git.ts";

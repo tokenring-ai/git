@@ -1,11 +1,12 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
-export const name = "git/rollback";
+const name = "git/rollback";
 
 export async function execute(
-  args: { commit?: string; steps?: number },
+  args: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<string> {
   const fileSystem = agent.requireServiceByType(FileSystemService);
@@ -51,9 +52,13 @@ export async function execute(
   }
 }
 
-export const description = "Rolls back to a previous git commit.";
+const description = "Rolls back to a previous git commit.";
 
-export const inputSchema = z.object({
+const inputSchema = z.object({
   commit: z.string().describe("The commit hash to rollback to").optional(),
   steps: z.number().int().describe("Number of commits to roll back").optional(),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

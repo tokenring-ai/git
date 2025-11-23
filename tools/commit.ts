@@ -1,14 +1,15 @@
 import Agent from "@tokenring-ai/agent/Agent";
 import ModelRegistry from "@tokenring-ai/ai-client/ModelRegistry";
 import {ChatService, createChatRequest} from "@tokenring-ai/chat";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
 // Exported tool name used for chat messages and identification
-export const name = "git/commit";
+const name = "git/commit";
 
 export async function execute(
-  args: { message?: string },
+  args: z.infer<typeof inputSchema>,
   agent: Agent,
 ): Promise<string> {
   const fileSystem = agent.requireServiceByType(FileSystemService);
@@ -81,8 +82,8 @@ export async function execute(
   return "Changes successfully committed to git";
 }
 
-export const description = "Commits changes in the source directory to git.";
-export const inputSchema = z.object({
+const description = "Commits changes in the source directory to git.";
+const inputSchema = z.object({
   message: z
     .string()
     .describe(
@@ -90,3 +91,7 @@ export const inputSchema = z.object({
     )
     .optional(),
 });
+
+export default {
+  name, description, inputSchema, execute,
+} as TokenRingToolDefinition<typeof inputSchema>;

@@ -1,5 +1,7 @@
-import {AgentCommandService, AgentLifecycleService, AgentTeam, TokenRingPackage} from "@tokenring-ai/agent";
+import TokenRingApp from "@tokenring-ai/app"; 
+import {AgentCommandService, AgentLifecycleService} from "@tokenring-ai/agent";
 import {ChatService} from "@tokenring-ai/chat";
+import {TokenRingPlugin} from "@tokenring-ai/app";
 import * as chatCommands from "./chatCommands.ts";
 import GitService from "./GitService.js";
 import * as hooks from "./hooks.ts";
@@ -13,16 +15,16 @@ export default {
   name: packageJSON.name,
   version: packageJSON.version,
   description: packageJSON.description,
-  install(agentTeam: AgentTeam) {
-    agentTeam.waitForService(ChatService, chatService =>
+  install(app: TokenRingApp) {
+    app.waitForService(ChatService, chatService =>
       chatService.addTools(packageJSON.name, tools)
     );
-    agentTeam.waitForService(AgentCommandService, agentCommandService =>
+    app.waitForService(AgentCommandService, agentCommandService =>
       agentCommandService.addAgentCommands(chatCommands)
     );
-    agentTeam.addServices(new GitService());
-    agentTeam.waitForService(AgentLifecycleService, lifecycleService =>
+    app.addServices(new GitService());
+    app.waitForService(AgentLifecycleService, lifecycleService =>
       lifecycleService.addHooks(packageJSON.name, hooks)
     );
   },
-} as TokenRingPackage;
+} as TokenRingPlugin;
