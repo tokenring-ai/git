@@ -1,5 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
-import ModelRegistry from "@tokenring-ai/ai-client/ModelRegistry";
+import {ChatModelRegistry} from "@tokenring-ai/ai-client/ModelRegistry";
 import {ChatService, createChatRequest} from "@tokenring-ai/chat";
 import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {FileSystemService} from "@tokenring-ai/filesystem";
@@ -13,7 +13,7 @@ export async function execute(
   agent: Agent,
 ): Promise<string> {
   const fileSystem = agent.requireServiceByType(FileSystemService);
-  const modelRegistry = agent.requireServiceByType(ModelRegistry);
+  const chatModelRegistry = agent.requireServiceByType(ChatModelRegistry);
   const chatService = agent.requireServiceByType(ChatService);
 
   const currentMessage = chatService.getCurrentMessage(agent);
@@ -45,7 +45,7 @@ export async function execute(
 
       request.tools = {};
 
-      const client = await modelRegistry.chat.getFirstOnlineClient(model);
+      const client = await chatModelRegistry.getFirstOnlineClient(model);
       const [output] = await client.textChat(request, agent);
       if (output && output.trim() !== "") {
         // Ensure AI provides a non-empty message
