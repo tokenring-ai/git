@@ -2,11 +2,11 @@ import TokenRingApp from "@tokenring-ai/app";
 import {AgentCommandService, AgentLifecycleService} from "@tokenring-ai/agent";
 import {ChatService} from "@tokenring-ai/chat";
 import {TokenRingPlugin} from "@tokenring-ai/app";
-import * as chatCommands from "./chatCommands.ts";
+import chatCommands from "./chatCommands.ts";
 import GitService from "./GitService.js";
-import * as hooks from "./hooks.ts";
+import hooks from "./hooks.ts";
 import packageJSON from './package.json' with {type: 'json'};
-import * as tools from "./tools.ts";
+import tools from "./tools.ts";
 
 export {default as GitService} from "./GitService.ts";
 

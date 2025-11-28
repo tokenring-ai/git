@@ -23,7 +23,7 @@ export async function execute(
   }
 
   try {
-    // Determine which commit to rollback to
+    // Determine which commit to roll back to
     if (args.commit) {
       // Rollback to specific commit
       agent.infoLine(`[${toolName}] Rolling back to commit ${args.commit}...`);
