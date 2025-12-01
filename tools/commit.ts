@@ -16,7 +16,7 @@ export async function execute(
   const chatModelRegistry = agent.requireServiceByType(ChatModelRegistry);
   const chatService = agent.requireServiceByType(ChatService);
 
-  const currentMessage = chatService.getCurrentMessage(agent);
+  const currentMessage = chatService.getLastMessage(agent);
 
   let gitCommitMessage = args.message; // Use provided message if available
 
@@ -25,19 +25,14 @@ export async function execute(
     agent.infoLine(`[${name}] Asking OpenAI to generate a git commit message...`);
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
     if (currentMessage) {
-      const requestOptions = chatService.getChatConfig(agent);
       const model = chatService.getModel(agent);
 
+      const chatConfig = chatService.getChatConfig(agent);
+
       const request = await createChatRequest(
-        {
-          ...requestOptions,
-          input: {
-            role: "user",
-            content:
-              "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
-          },
-        },
-        agent,
+        "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
+        chatConfig,
+        agent
       );
 
       // Keep only the last two messages (system/user) if present
