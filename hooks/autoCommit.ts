@@ -22,4 +22,4 @@ async function afterTesting(agent: Agent): Promise<void> {
   }
 }
 
-export default {name, description, afterTesting} as HookConfig;
+export default {name, description, afterTesting} satisfies HookConfig;
