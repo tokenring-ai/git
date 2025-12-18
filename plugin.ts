@@ -25,4 +25,4 @@ export default {
       lifecycleService.addHooks(packageJSON.name, hooks)
     );
   },
-} as TokenRingPlugin;
+} satisfies TokenRingPlugin;
