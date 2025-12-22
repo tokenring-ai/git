@@ -1,6 +1,6 @@
 import Agent from "@tokenring-ai/agent/Agent";
 import {ChatModelRegistry} from "@tokenring-ai/ai-client/ModelRegistry";
-import {ChatService, createChatRequest} from "@tokenring-ai/chat";
+import {ChatService} from "@tokenring-ai/chat";
 import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
@@ -29,19 +29,21 @@ export async function execute(
 
       const chatConfig = chatService.getChatConfig(agent);
 
-      const request = await createChatRequest(
+      const messages = await chatService.buildChatMessages(
         "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
         chatConfig,
         agent
       );
 
-      // Keep only the last two messages (system/user) if present
-      request.messages.splice(0, request.messages.length - 2);
 
-      request.tools = {};
+      // Keep only the last two messages (system/user) if present
+      messages.splice(0, messages.length - 2);
 
       const client = await chatModelRegistry.getFirstOnlineClient(model);
-      const [output] = await client.textChat(request, agent);
+      const [output] = await client.textChat({
+        messages,
+        tools: {}
+      }, agent);
       if (output && output.trim() !== "") {
         // Ensure AI provides a non-empty message
         gitCommitMessage = output;
