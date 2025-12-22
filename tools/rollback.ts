@@ -3,7 +3,7 @@ import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
-const name = "git/rollback";
+const name = "git_rollback";
 
 export async function execute(
   args: z.infer<typeof inputSchema>,

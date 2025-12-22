@@ -6,7 +6,7 @@ import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
 // Exported tool name used for chat messages and identification
-const name = "git/commit";
+const name = "git_commit";
 
 export async function execute(
   args: z.infer<typeof inputSchema>,

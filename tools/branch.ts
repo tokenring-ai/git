@@ -4,7 +4,7 @@ import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
 // Export the tool name in the required format
-const name = "git/branch";
+const name = "git_branch";
 
 export async function execute(
   args: z.infer<typeof inputSchema>,
