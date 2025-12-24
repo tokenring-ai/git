@@ -12,11 +12,13 @@ Key features include:
 - Interactive slash commands for Git operations
 - Branch management capabilities
 - Safe rollback operations with validation
+- Git status checks and dirty file detection
+- Integrated with TokenRing's filesystem and testing services
 
 ## Installation
 
 ```bash
-npm install @tokenring-ai/git
+bun install @tokenring-ai/git
 ```
 
 ## Usage
@@ -81,6 +83,8 @@ await commitTool.execute({ message: "Fix authentication bug" }, agent);
 - Uses AI to generate commit messages when none provided
 - Sets filesystem as clean after successful commit
 - Uses default Git user: `TokenRing Coder <coder@tokenring.ai>`
+- Validates git repository state before committing
+- Generates commit messages based on recent chat context
 
 #### rollbackTool
 
@@ -104,6 +108,7 @@ await rollbackTool.execute({ commit: "abc123" }, agent);
 - Validates no uncommitted changes exist before rollback
 - Performs hard reset (`git reset --hard`)
 - Ensures clean filesystem state after operation
+- Validates input parameters
 
 #### branchTool
 
@@ -131,6 +136,12 @@ await branchTool.execute({ action: "delete", branchName: "old-feature" }, agent)
 **Parameters:**
 - `action: "list" | "create" | "switch" | "delete" | "current"` - Branch operation to perform
 - `branchName?: string` - Required for create, switch, and delete actions
+
+**Features:**
+- Supports local and remote branch listing
+- Creates and switches to new branches in one operation
+- Validates branch existence before switch
+- Provides detailed branch information
 
 ### Chat Commands
 
@@ -202,12 +213,14 @@ pkg/git/
 
 ## Dependencies
 
-- `@tokenring-ai/chat@0.1.0` - Chat service integration
-- `@tokenring-ai/agent@0.1.0` - Agent framework
-- `@tokenring-ai/filesystem@0.1.0` - Filesystem operations
-- `@tokenring-ai/testing@0.1.0` - Testing service integration
-- `@tokenring-ai/utility@0.1.0` - Utility functions
-- `execa@^9.6.0` - Shell command execution
+- `@tokenring-ai/ai-client@0.2.0` - AI service integration for commit message generation
+- `@tokenring-ai/app@0.2.0` - Application framework
+- `@tokenring-ai/chat@0.2.0` - Chat service integration
+- `@tokenring-ai/agent@0.2.0` - Agent framework
+- `@tokenring-ai/filesystem@0.2.0` - Filesystem operations
+- `@tokenring-ai/testing@0.2.0` - Testing service integration
+- `@tokenring-ai/utility@0.2.0` - Utility functions
+- `execa@^9.6.1` - Shell command execution
 - `zod` - Schema validation
 
 ## Configuration
@@ -265,13 +278,41 @@ await rollbackTool.execute({
 }, agent);
 ```
 
+### 5. Using the Chat Command
+
+```bash
+# Commit with AI-generated message
+/git commit
+
+# Commit with custom message
+/git commit "Fix bug in authentication logic"
+
+# Roll back 2 commits
+/git rollback 2
+
+# List all branches
+/git branch list
+
+# Create and switch to new branch
+/git branch create feature-update
+```
+
 ## Development
 
 ### Scripts
 
 ```bash
 # Lint the code
-npm run eslint
+bun run eslint
+
+# Run tests
+bun run test
+
+# Run tests with coverage
+bun run test:coverage
+
+# Run tests in watch mode
+bun run test:watch
 ```
 
 ### TypeScript Configuration
@@ -289,13 +330,15 @@ The package uses TypeScript with modern ES modules configuration:
 - **Safety**: Rollback operations discard changes - use with caution
 - **AI Dependencies**: Commit message generation depends on available AI services and chat context
 - **Testing**: No specific tests in this package; relies on agent-level testing
+- **Branch Operations**: Requires proper Git branch naming conventions
 
 ## Contributing
 
 1. Follow the existing code style and patterns
-2. Run `npm run eslint` before committing changes
+2. Run `bun run eslint` before committing changes
 3. Ensure all functionality works with the TokenRing agent framework
 4. Add appropriate error handling and logging
+5. Update tests if adding new functionality
 
 ## License
 
