@@ -23,7 +23,7 @@ export async function execute(
         "git",
         "branch",
         "-a",
-      ]);
+      ], {}, agent);
       agent.infoLine(`[${name}] Branches:`);
       stdout.split("\n").forEach((line: string) => {
         if (line.trim()) {
@@ -38,7 +38,7 @@ export async function execute(
       }
       // Create a new branch
       agent.infoLine(`[${name}] Creating new branch: ${branchName}...`);
-      await fileSystem.executeCommand(["git", "checkout", "-b", branchName]);
+      await fileSystem.executeCommand(["git", "checkout", "-b", branchName], {}, agent);
       agent.infoLine(
         `[${name}] Successfully created and switched to branch: ${branchName}`,
       );
@@ -50,7 +50,7 @@ export async function execute(
       }
       // Switch to existing branch
       agent.infoLine(`[${name}] Switching to branch: ${branchName}...`);
-      await fileSystem.executeCommand(["git", "checkout", branchName]);
+      await fileSystem.executeCommand(["git", "checkout", branchName],{}, agent);
       agent.infoLine(
         `[${name}] Successfully switched to branch: ${branchName}`,
       );
@@ -62,7 +62,7 @@ export async function execute(
       }
       // Delete a branch
       agent.infoLine(`[${name}] Deleting branch: ${branchName}...`);
-      await fileSystem.executeCommand(["git", "branch", "-d", branchName]);
+      await fileSystem.executeCommand(["git", "branch", "-d", branchName], {}, agent);
       agent.infoLine(`[${name}] Successfully deleted branch: ${branchName}`);
       return `Branch '${branchName}' deleted`;
 
@@ -72,7 +72,7 @@ export async function execute(
         "git",
         "branch",
         "--show-current",
-      ]);
+      ], {}, agent);
       const current = (currentBranch).trim();
       agent.infoLine(`[${name}] Current branch: ${current}`);
       return `Current branch: ${current}`;
@@ -80,11 +80,11 @@ export async function execute(
     default: {
       // Default: show current branch and list local branches
       const {stdout: currentBranchDefault} =
-        await fileSystem.executeCommand(["git", "branch", "--show-current"]);
+        await fileSystem.executeCommand(["git", "branch", "--show-current"], {}, agent);
       const {stdout: branches} = await fileSystem.executeCommand([
         "git",
         "branch",
-      ]);
+      ], {}, agent);
 
       agent.infoLine(
         `[${name}] Current branch: ${(currentBranchDefault).trim()}`,

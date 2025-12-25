@@ -11,7 +11,7 @@ const description =
 async function afterTesting(agent: Agent): Promise<void> {
   const testingService = agent.requireServiceByType(TestingService);
   const filesystem = agent.requireServiceByType(FileSystemService);
-  if (filesystem.dirty) {
+  if (filesystem.isDirty(agent)) {
     if (!testingService.allTestsPassed(agent)) {
       agent.errorLine(
         "Not committing changes, due to tests not passing",

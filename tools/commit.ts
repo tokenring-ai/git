@@ -61,7 +61,7 @@ export async function execute(
     agent.infoLine(`[${name}] Using provided commit message.`);
   }
 
-  await fileSystem.executeCommand(["git", "add", "."]);
+  await fileSystem.executeCommand(["git", "add", "."], {}, agent);
   await fileSystem.executeCommand([
     "git",
     "-c",
@@ -71,10 +71,10 @@ export async function execute(
     "commit",
     "-m",
     gitCommitMessage,
-  ]);
+  ], {}, agent);
   agent.infoLine(`[${name}] Changes committed to git.`);
 
-  fileSystem.setDirty(false);
+  fileSystem.setDirty(false, agent);
   // Return only the result without tool name prefix
   return "Changes successfully committed to git";
 }

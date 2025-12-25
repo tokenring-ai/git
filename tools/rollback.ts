@@ -17,7 +17,7 @@ export async function execute(
     "git",
     "status",
     "--porcelain",
-  ]);
+  ], {}, agent);
   if (statusOutput.trim() !== "") {
     throw new Error(`[${name}] Rollback aborted: uncommitted changes detected`);
   }
@@ -27,7 +27,7 @@ export async function execute(
     if (args.commit) {
       // Rollback to specific commit
       agent.infoLine(`[${toolName}] Rolling back to commit ${args.commit}...`);
-      await fileSystem.executeCommand(["git", "reset", "--hard", args.commit]);
+      await fileSystem.executeCommand(["git", "reset", "--hard", args.commit], {}, agent);
     } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
       // Rollback by a number of steps
       agent.infoLine(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
@@ -36,15 +36,14 @@ export async function execute(
         "reset",
         "--hard",
         `HEAD~${args.steps}`,
-      ]);
+      ], {}, agent);
     } else {
       // Default: rollback one commit
       agent.infoLine(`[${toolName}] Rolling back to previous commit...`);
-      await fileSystem.executeCommand(["git", "reset", "--hard", "HEAD~1"]);
+      await fileSystem.executeCommand(["git", "reset", "--hard", "HEAD~1"], {}, agent);
     }
 
     agent.infoLine(`[${toolName}] Rollback completed successfully.`);
-    fileSystem.setDirty(false);
     return "Successfully rolled back to previous state";
   } catch (error: any) {
     // Throw error directly without prior logging
