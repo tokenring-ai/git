@@ -208,6 +208,7 @@ pkg/git/
 │   └── autoCommit.ts    # Auto-commit hook implementation
 ├── package.json         # Package metadata and dependencies
 ├── tsconfig.json        # TypeScript configuration
+├── vitest.config.ts     # Test configuration
 └── LICENSE              # MIT license
 ```
 
