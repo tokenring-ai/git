@@ -39,7 +39,7 @@ export async function execute(
       // Keep only the last two messages (system/user) if present
       messages.splice(0, messages.length - 2);
 
-      const client = await chatModelRegistry.getFirstOnlineClient(model);
+      const client = await chatModelRegistry.getClient(model);
       const [output] = await client.textChat({
         messages,
         tools: {}
