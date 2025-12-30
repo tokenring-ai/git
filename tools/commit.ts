@@ -1,7 +1,7 @@
 import Agent from "@tokenring-ai/agent/Agent";
 import {ChatModelRegistry} from "@tokenring-ai/ai-client/ModelRegistry";
 import {ChatService} from "@tokenring-ai/chat";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/types";
+import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
@@ -25,7 +25,7 @@ export async function execute(
     agent.infoLine(`[${name}] Asking OpenAI to generate a git commit message...`);
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
     if (currentMessage) {
-      const model = chatService.getModel(agent);
+      const model = chatService.requireModel(agent);
 
       const chatConfig = chatService.getChatConfig(agent);
 
