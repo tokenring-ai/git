@@ -18,18 +18,19 @@ export async function execute(
   switch (action) {
     case "list": {
       // List all branches
-      agent.infoLine(`[${name}] Listing all branches...`);
+      agent.infoMessage(`[${name}] Listing all branches...`);
       const {stdout} = await fileSystem.executeCommand([
         "git",
         "branch",
         "-a",
       ], {}, agent);
-      agent.infoLine(`[${name}] Branches:`);
+      const lines: string[] = [`[${name}] Branches:`];
       stdout.split("\n").forEach((line: string) => {
         if (line.trim()) {
-          agent.infoLine(`[${name}]   ${line}`);
+          lines.push(`[${name}]   ${line}`);
         }
       });
+      agent.infoMessage(lines.join("\n"));
       return "Branch list displayed successfully";
     }
     case "create":
@@ -37,9 +38,9 @@ export async function execute(
         throw new Error(`[${name}] Branch name is required for create action`);
       }
       // Create a new branch
-      agent.infoLine(`[${name}] Creating new branch: ${branchName}...`);
+      agent.infoMessage(`[${name}] Creating new branch: ${branchName}...`);
       await fileSystem.executeCommand(["git", "checkout", "-b", branchName], {}, agent);
-      agent.infoLine(
+      agent.infoMessage(
         `[${name}] Successfully created and switched to branch: ${branchName}`,
       );
       return `Branch '${branchName}' created and checked out`;
@@ -49,9 +50,9 @@ export async function execute(
         throw new Error(`[${name}] Branch name is required for switch action`);
       }
       // Switch to existing branch
-      agent.infoLine(`[${name}] Switching to branch: ${branchName}...`);
+      agent.infoMessage(`[${name}] Switching to branch: ${branchName}...`);
       await fileSystem.executeCommand(["git", "checkout", branchName],{}, agent);
-      agent.infoLine(
+      agent.infoMessage(
         `[${name}] Successfully switched to branch: ${branchName}`,
       );
       return `Switched to branch '${branchName}'`;
@@ -61,9 +62,9 @@ export async function execute(
         throw new Error(`[${name}] Branch name is required for delete action`);
       }
       // Delete a branch
-      agent.infoLine(`[${name}] Deleting branch: ${branchName}...`);
+      agent.infoMessage(`[${name}] Deleting branch: ${branchName}...`);
       await fileSystem.executeCommand(["git", "branch", "-d", branchName], {}, agent);
-      agent.infoLine(`[${name}] Successfully deleted branch: ${branchName}`);
+      agent.infoMessage(`[${name}] Successfully deleted branch: ${branchName}`);
       return `Branch '${branchName}' deleted`;
 
     case "current": {
@@ -74,7 +75,7 @@ export async function execute(
         "--show-current",
       ], {}, agent);
       const current = (currentBranch).trim();
-      agent.infoLine(`[${name}] Current branch: ${current}`);
+      agent.infoMessage(`[${name}] Current branch: ${current}`);
       return `Current branch: ${current}`;
     }
     default: {
@@ -86,15 +87,17 @@ export async function execute(
         "branch",
       ], {}, agent);
 
-      agent.infoLine(
+      const lines: string[] = [];
+      lines.push(
         `[${name}] Current branch: ${(currentBranchDefault).trim()}`,
       );
-      agent.infoLine(`[${name}] Local branches:`);
+      lines.push(`[${name}] Local branches:`);
       (branches).split("\n").forEach((line: string) => {
         if (line.trim()) {
-          agent.infoLine(`[${name}]   ${line}`);
+          lines.push(`[${name}]   ${line}`);
         }
       });
+      agent.infoMessage(lines.join("\n"));
       return "Branch information displayed successfully";
     }
   }

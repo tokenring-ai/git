@@ -26,11 +26,11 @@ export async function execute(
     // Determine which commit to roll back to
     if (args.commit) {
       // Rollback to specific commit
-      agent.infoLine(`[${toolName}] Rolling back to commit ${args.commit}...`);
+      agent.infoMessage(`[${toolName}] Rolling back to commit ${args.commit}...`);
       await fileSystem.executeCommand(["git", "reset", "--hard", args.commit], {}, agent);
     } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
       // Rollback by a number of steps
-      agent.infoLine(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
+      agent.infoMessage(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
       await fileSystem.executeCommand([
         "git",
         "reset",
@@ -39,11 +39,11 @@ export async function execute(
       ], {}, agent);
     } else {
       // Default: rollback one commit
-      agent.infoLine(`[${toolName}] Rolling back to previous commit...`);
+      agent.infoMessage(`[${toolName}] Rolling back to previous commit...`);
       await fileSystem.executeCommand(["git", "reset", "--hard", "HEAD~1"], {}, agent);
     }
 
-    agent.infoLine(`[${toolName}] Rollback completed successfully.`);
+    agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
     return "Successfully rolled back to previous state";
   } catch (error: any) {
     // Throw error directly without prior logging

@@ -22,7 +22,7 @@ export async function execute(
 
   if (!gitCommitMessage) {
     // If no message provided, generate one
-    agent.infoLine(`[${name}] Asking OpenAI to generate a git commit message...`);
+    agent.infoMessage(`[${name}] Asking OpenAI to generate a git commit message...`);
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
     if (currentMessage) {
       const model = chatService.requireModel(agent);
@@ -48,17 +48,17 @@ export async function execute(
         // Ensure AI provides a non-empty message
         gitCommitMessage = output;
       } else {
-        agent.warningLine(
+        agent.warningMessage(
           `[${name}] AI did not provide a commit message, using default.`,
         );
       }
     } else {
-      agent.errorLine(
+      agent.errorMessage(
         `[${name}] Most recent chat message does not have a response id, unable to generate a git commit message, using default.`,
       );
     }
   } else {
-    agent.infoLine(`[${name}] Using provided commit message.`);
+    agent.infoMessage(`[${name}] Using provided commit message.`);
   }
 
   await fileSystem.executeCommand(["git", "add", "."], {}, agent);
@@ -72,7 +72,7 @@ export async function execute(
     "-m",
     gitCommitMessage,
   ], {}, agent);
-  agent.infoLine(`[${name}] Changes committed to git.`);
+  agent.infoMessage(`[${name}] Changes committed to git.`);
 
   fileSystem.setDirty(false, agent);
   // Return only the result without tool name prefix

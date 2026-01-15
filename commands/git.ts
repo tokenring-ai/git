@@ -10,12 +10,12 @@ import {execute as rollback} from "../tools/rollback.ts";
  */
 
 const description =
-  "/git - Git operations. Use 'commit' to commit changes, 'rollback [position]' to rollback by [position] commits (default: 1), 'branch [options]' for branch management.";
+  "/git - Git operations. ";
 
 async function execute(remainder: string, agent: Agent) {
 
   if (!remainder || !remainder.trim()) {
-    agent.errorLine("Usage: /git <commit|rollback|branch> [options]");
+    agent.errorMessage("Usage: /git <commit|rollback|branch> [options]");
     return;
   }
 
@@ -40,7 +40,7 @@ async function execute(remainder: string, agent: Agent) {
         if (!isNaN(parsed) && parsed > 0) {
           steps = parsed;
         } else {
-          agent.errorLine(
+          agent.errorMessage(
             `Invalid rollback position: "${args[1]}". Must be a positive integer.`,
           );
           return;
@@ -62,7 +62,7 @@ async function execute(remainder: string, agent: Agent) {
             action = args[1];
             break;
           default:
-            agent.errorLine(
+            agent.errorMessage(
               `Invalid branch action: "${args[1]}". Valid actions are: list, current, create, switch, delete`,
             );
             return;
@@ -76,7 +76,7 @@ async function execute(remainder: string, agent: Agent) {
     }
 
     default:
-      agent.errorLine(
+      agent.errorMessage(
         `Unknown git action: "${action}". Use 'commit', 'rollback', or 'branch'.`,
       );
       break;

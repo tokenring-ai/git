@@ -13,7 +13,7 @@ async function afterTesting(agent: Agent): Promise<void> {
   const filesystem = agent.requireServiceByType(FileSystemService);
   if (filesystem.isDirty(agent)) {
     if (!testingService.allTestsPassed(agent)) {
-      agent.errorLine(
+      agent.errorMessage(
         "Not committing changes, due to tests not passing",
       );
       return;
