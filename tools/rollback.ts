@@ -4,6 +4,7 @@ import {FileSystemService} from "@tokenring-ai/filesystem";
 import {z} from "zod";
 
 const name = "git_rollback";
+const displayName = "Git/rollback";
 
 export async function execute(
   args: z.infer<typeof inputSchema>,
@@ -59,5 +60,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

@@ -5,6 +5,7 @@ import TestingService from "@tokenring-ai/testing/TestingService";
 import {execute as commit} from "../tools/commit.ts";
 
 const name = "autoCommit";
+const displayName = "Git/Auto Commit";
 const description =
   "Automatically commit changes to the source directory to git";
 
@@ -22,4 +23,4 @@ async function afterTesting(agent: Agent): Promise<void> {
   }
 }
 
-export default {name, description, afterTesting} satisfies HookConfig;
+export default {name, displayName, description, afterTesting} satisfies HookConfig;

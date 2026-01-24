@@ -7,6 +7,7 @@ import {z} from "zod";
 
 // Exported tool name used for chat messages and identification
 const name = "git_commit";
+const displayName = "Git/commit";
 
 export async function execute(
   args: z.infer<typeof inputSchema>,
@@ -90,5 +91,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

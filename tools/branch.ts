@@ -5,6 +5,7 @@ import {z} from "zod";
 
 // Export the tool name in the required format
 const name = "git_branch";
+const displayName = "Git/branch";
 
 export async function execute(
   args: z.infer<typeof inputSchema>,
@@ -118,5 +119,5 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, description, inputSchema, execute,
+  name, displayName, description, inputSchema, execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;
