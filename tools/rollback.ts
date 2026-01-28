@@ -7,7 +7,7 @@ const name = "git_rollback";
 const displayName = "Git/rollback";
 
 export async function execute(
-  args: z.infer<typeof inputSchema>,
+  args: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<string> {
   const fileSystem = agent.requireServiceByType(FileSystemService);
