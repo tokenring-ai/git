@@ -3,6 +3,7 @@ import {ChatModelRegistry} from "@tokenring-ai/ai-client/ModelRegistry";
 import {ChatService} from "@tokenring-ai/chat";
 import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {FileSystemService} from "@tokenring-ai/filesystem";
+import {TerminalService} from "@tokenring-ai/terminal";
 import {z} from "zod";
 
 // Exported tool name used for chat messages and identification
@@ -14,6 +15,7 @@ export async function execute(
   agent: Agent,
 ): Promise<string> {
   const fileSystem = agent.requireServiceByType(FileSystemService);
+  const terminal = agent.requireServiceByType(TerminalService);
   const chatModelRegistry = agent.requireServiceByType(ChatModelRegistry);
   const chatService = agent.requireServiceByType(ChatService);
 
@@ -62,9 +64,8 @@ export async function execute(
     agent.infoMessage(`[${name}] Using provided commit message.`);
   }
 
-  await fileSystem.executeCommand(["git", "add", "."], {}, agent);
-  await fileSystem.executeCommand([
-    "git",
+  await terminal.executeCommand("git", ["add", "."], {}, agent);
+  await terminal.executeCommand("git", [
     "-c",
     "user.name=TokenRing Coder",
     "-c",

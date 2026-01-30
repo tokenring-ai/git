@@ -1,6 +1,6 @@
 import Agent from "@tokenring-ai/agent/Agent";
 import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
-import {FileSystemService} from "@tokenring-ai/filesystem";
+import {TerminalService} from "@tokenring-ai/terminal";
 import {z} from "zod";
 
 // Export the tool name in the required format
@@ -11,7 +11,7 @@ export async function execute(
   args: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<string> {
-  const fileSystem = agent.requireServiceByType(FileSystemService);
+  const terminal = agent.requireServiceByType(TerminalService);
 
   const action = args.action;
   const branchName = args.branchName;
@@ -20,8 +20,7 @@ export async function execute(
     case "list": {
       // List all branches
       agent.infoMessage(`[${name}] Listing all branches...`);
-      const {stdout} = await fileSystem.executeCommand([
-        "git",
+      const {stdout} = await terminal.executeCommand("git", [
         "branch",
         "-a",
       ], {}, agent);
@@ -40,7 +39,7 @@ export async function execute(
       }
       // Create a new branch
       agent.infoMessage(`[${name}] Creating new branch: ${branchName}...`);
-      await fileSystem.executeCommand(["git", "checkout", "-b", branchName], {}, agent);
+      await terminal.executeCommand("git", ["checkout", "-b", branchName], {}, agent);
       agent.infoMessage(
         `[${name}] Successfully created and switched to branch: ${branchName}`,
       );
@@ -52,7 +51,7 @@ export async function execute(
       }
       // Switch to existing branch
       agent.infoMessage(`[${name}] Switching to branch: ${branchName}...`);
-      await fileSystem.executeCommand(["git", "checkout", branchName],{}, agent);
+      await terminal.executeCommand("git", ["checkout", branchName], {}, agent);
       agent.infoMessage(
         `[${name}] Successfully switched to branch: ${branchName}`,
       );
@@ -64,17 +63,13 @@ export async function execute(
       }
       // Delete a branch
       agent.infoMessage(`[${name}] Deleting branch: ${branchName}...`);
-      await fileSystem.executeCommand(["git", "branch", "-d", branchName], {}, agent);
+      await terminal.executeCommand("git", ["branch", "-d", branchName], {}, agent);
       agent.infoMessage(`[${name}] Successfully deleted branch: ${branchName}`);
       return `Branch '${branchName}' deleted`;
 
     case "current": {
       // Show current branch
-      const {stdout: currentBranch} = await fileSystem.executeCommand([
-        "git",
-        "branch",
-        "--show-current",
-      ], {}, agent);
+      const {stdout: currentBranch} = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
       const current = (currentBranch).trim();
       agent.infoMessage(`[${name}] Current branch: ${current}`);
       return `Current branch: ${current}`;
@@ -82,11 +77,8 @@ export async function execute(
     default: {
       // Default: show current branch and list local branches
       const {stdout: currentBranchDefault} =
-        await fileSystem.executeCommand(["git", "branch", "--show-current"], {}, agent);
-      const {stdout: branches} = await fileSystem.executeCommand([
-        "git",
-        "branch",
-      ], {}, agent);
+        await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
+      const {stdout: branches} = await terminal.executeCommand("git", ["branch"], {}, agent);
 
       const lines: string[] = [];
       lines.push(

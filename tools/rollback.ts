@@ -1,6 +1,6 @@
 import Agent from "@tokenring-ai/agent/Agent";
 import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
-import {FileSystemService} from "@tokenring-ai/filesystem";
+import {TerminalService} from "@tokenring-ai/terminal";
 import {z} from "zod";
 
 const name = "git_rollback";
@@ -10,12 +10,12 @@ export async function execute(
   args: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<string> {
-  const fileSystem = agent.requireServiceByType(FileSystemService);
+  const terminal = agent.requireServiceByType(TerminalService);
+
   const toolName = "rollback";
 
   // Ensure there are no uncommitted changes
-  const {stdout: statusOutput} = await fileSystem.executeCommand([
-    "git",
+  const {stdout: statusOutput} = await terminal.executeCommand("git", [
     "status",
     "--porcelain",
   ], {}, agent);
@@ -28,12 +28,11 @@ export async function execute(
     if (args.commit) {
       // Rollback to specific commit
       agent.infoMessage(`[${toolName}] Rolling back to commit ${args.commit}...`);
-      await fileSystem.executeCommand(["git", "reset", "--hard", args.commit], {}, agent);
+      await terminal.executeCommand("git", ["reset", "--hard", args.commit], {}, agent);
     } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
       // Rollback by a number of steps
       agent.infoMessage(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
-      await fileSystem.executeCommand([
-        "git",
+      await terminal.executeCommand("git", [
         "reset",
         "--hard",
         `HEAD~${args.steps}`,
@@ -41,7 +40,7 @@ export async function execute(
     } else {
       // Default: rollback one commit
       agent.infoMessage(`[${toolName}] Rolling back to previous commit...`);
-      await fileSystem.executeCommand(["git", "reset", "--hard", "HEAD~1"], {}, agent);
+      await terminal.executeCommand("git", ["reset", "--hard", "HEAD~1"], {}, agent);
     }
 
     agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
