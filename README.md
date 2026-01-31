@@ -66,6 +66,7 @@ Available slash commands for Git operations:
 Available tools for agent integration via tools.ts:
 
 ### git_commit
+
 Commits changes in the source directory to git.
 
 ```typescript
@@ -91,6 +92,7 @@ Commits changes in the source directory to git.
 - Responds only with success message, no tool name prefix
 
 ### git_rollback
+
 Rolls back to a previous git commit.
 
 ```typescript
@@ -120,8 +122,9 @@ Rolls back to a previous git commit.
 - Default behavior rolls back one commit (use HEAD~1)
 - Throws descriptive error with tool name prefix on failure
 
-### git_branch
-Manages git branches - list, create, switch, or delete branches.
+### Branch Management
+
+Branch management is available through the `/git branch` command and the `git_branch` tool (exported from `tools/branch.ts`).
 
 ```typescript
 {
@@ -396,6 +399,7 @@ For tools to function properly, the following services must be available:
 - **ChatService**: Required for tool registration (added by framework)
 - **ChatModelRegistry**: Used by git_commit for AI message generation
 - **FileSystemService**: Used for all Git command execution and state checks
+- **TerminalService**: Used for all Git command execution
 - **AgentCommandService**: Required for slash command registration
 - **TestingService**: Used by autoCommit hook for test status
 - **AgentLifecycleService**: Required for hook registration
@@ -439,7 +443,7 @@ await agent.executeTool('git_branch', { action: "create", branchName: "feature-n
 **Rollback with Uncommitted Changes:**
 ```typescript
 // 1. Agent attempts rollback via git_rollback
-// 2. FileSystemService.executeCommand(['git', 'status', '--porcelain'])
+// 2. TerminalService.executeCommand(['git', 'status', '--porcelain'])
 // 3. If statusOutput is not empty:
 //    - Error thrown with message "[git_rollback] Rollback aborted: uncommitted changes detected"
 // 4. Rollback does NOT execute
@@ -448,7 +452,7 @@ await agent.executeTool('git_branch', { action: "create", branchName: "feature-n
 **Branch Switching:**
 ```typescript
 // 1. Agent calls git_branch with action: "switch"
-// 2. FileSystemService.executeCommand(['git', 'checkout', branchName])
+// 2. TerminalService.executeCommand(['git', 'checkout', branchName])
 // 3. Agent receives confirmation: "Successfully switched to branch 'main'"
 ```
 
@@ -493,7 +497,7 @@ pkg/git/
 ├── GitService.ts           # Main service class (TokenRingService implementation)
 ├── index.ts                # Main export (GitService)
 ├── plugin.ts               # Plugin registration and setup
-├── tools.ts                # Tool exports (git_commit, git_rollback, git_branch)
+├── tools.ts                # Tool exports (git_commit, git_rollback)
 ├── chatCommands.ts         # Chat command exports (git command)
 ├── hooks.ts                # Hook exports (autoCommit hook)
 ├── tools/
@@ -515,7 +519,7 @@ pkg/git/
 ```typescript
 // git_commit generates commit messages from chat context
 const messages = await chatService.buildChatMessages(
-  "Please create a git commit message...",
+  "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
   chatConfig,
   agent
 );
@@ -580,6 +584,7 @@ agent.errorMessage(`[${name}] Changes committed to git`);
 ## Related Package
 
 - **@tokenring-ai/filesystem**: Provides FileSystemService used by git tools for command execution
+- **@tokenring-ai/terminal**: Provides TerminalService used for executing git commands
 
 ## License
 
