@@ -15,11 +15,12 @@ export async function execute(
   const toolName = "rollback";
 
   // Ensure there are no uncommitted changes
-  const {stdout: statusOutput} = await terminal.executeCommand("git", [
+  const result = await terminal.executeCommand("git", [
     "status",
     "--porcelain",
   ], {}, agent);
-  if (statusOutput.trim() !== "") {
+  const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
+  if (output.trim() !== "") {
     throw new Error(`[${name}] Rollback aborted: uncommitted changes detected`);
   }
 

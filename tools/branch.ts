@@ -20,12 +20,13 @@ export async function execute(
     case "list": {
       // List all branches
       agent.infoMessage(`[${name}] Listing all branches...`);
-      const {stdout} = await terminal.executeCommand("git", [
+      const result = await terminal.executeCommand("git", [
         "branch",
         "-a",
       ], {}, agent);
       const lines: string[] = [`[${name}] Branches:`];
-      stdout.split("\n").forEach((line: string) => {
+      const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
+      output.split("\n").forEach((line: string) => {
         if (line.trim()) {
           lines.push(`[${name}]   ${line}`);
         }
@@ -69,23 +70,25 @@ export async function execute(
 
     case "current": {
       // Show current branch
-      const {stdout: currentBranch} = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
+      const result = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
+      const currentBranch = result.status === "success" || result.status === "badExitCode" ? result.output : "";
       const current = (currentBranch).trim();
       agent.infoMessage(`[${name}] Current branch: ${current}`);
       return `Current branch: ${current}`;
     }
     default: {
       // Default: show current branch and list local branches
-      const {stdout: currentBranchDefault} =
-        await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
-      const {stdout: branches} = await terminal.executeCommand("git", ["branch"], {}, agent);
+      const currentResult = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
+      const currentBranchDefault = currentResult.status === "success" || currentResult.status === "badExitCode" ? currentResult.output : "";
+      const branchesResult = await terminal.executeCommand("git", ["branch"], {}, agent);
+      const branches = branchesResult.status === "success" || branchesResult.status === "badExitCode" ? branchesResult.output : "";
 
       const lines: string[] = [];
       lines.push(
         `[${name}] Current branch: ${(currentBranchDefault).trim()}`,
       );
       lines.push(`[${name}] Local branches:`);
-      (branches).split("\n").forEach((line: string) => {
+      branches.split("\n").forEach((line: string) => {
         if (line.trim()) {
           lines.push(`[${name}]   ${line}`);
         }
