@@ -89,7 +89,7 @@ Commits changes in the source directory to git.
 - Matches against last two chat messages for context
 - Sets git user identity as "TokenRing Coder" with email "coder@tokenring.ai"
 - Stages all changes before committing (git add .)
-- Responds only with success message, no tool name prefix
+- Returns success message "Changes successfully committed to git" without tool name prefix
 
 ### git_rollback
 
@@ -124,25 +124,12 @@ Rolls back to a previous git commit.
 
 ### Branch Management
 
-Branch management is available through the `/git branch` command and the `git_branch` tool (exported from `tools/branch.ts`).
+Branch management is available through the `/git branch` command (defined in `commands/git.ts`) and the `branchTool` implementation (exported from `tools/branch.ts`).
+
+The `branchTool` can be imported directly:
 
 ```typescript
-{
-  name: "git_branch",
-  displayName: "Git/branch",
-  description: "Manages git branches - list, create, switch, or delete branches.",
-  inputSchema: {
-    action: z.object({
-      description: "The branch action to perform",
-      type: "enum",
-      values: ["list", "create", "switch", "delete", "current"]
-    }),
-    branchName: z.object({
-      description: "The name of the branch (required for create, switch, and delete actions)",
-      type: "string"
-    }).optional()
-  }
-}
+import branchTool from "@tokenring-ai/git/tools/branch.ts";
 ```
 
 **Functionality:**
@@ -151,7 +138,7 @@ Branch management is available through the `/git branch` command and the `git_br
 ```typescript
 await agent.executeTool('git_branch', { action: "list" });
 // Returns all branches from git branch -a
- Agent output includes tool name prefix for each branch line
+// Agent output includes tool name prefix for each branch line
 ```
 
 **current** - Show current branch:
@@ -165,7 +152,7 @@ await agent.executeTool('git_branch', { action: "current" });
 // Branch name is required
 await agent.executeTool('git_branch', { action: "create", branchName: "feature-xyz" });
 // Creates and switches to new branch using git checkout -b
- Agent confirms successful creation and checkout
+// Agent confirms successful creation and checkout
 ```
 
 **switch** - Switch to an existing branch:
@@ -173,7 +160,7 @@ await agent.executeTool('git_branch', { action: "create", branchName: "feature-x
 // Branch name is required
 await agent.executeTool('git_branch', { action: "switch", branchName: "main" });
 // Switches to existing branch using git checkout
- Agent confirms successful switch
+// Agent confirms successful switch
 ```
 
 **delete** - Delete a branch:
@@ -181,7 +168,7 @@ await agent.executeTool('git_branch', { action: "switch", branchName: "main" });
 // Branch name is required
 await agent.executeTool('git_branch', { action: "delete", branchName: "feature-xyz" });
 // Deletes branch using git branch -d
- Agent confirms successful deletion
+// Agent confirms successful deletion
 ```
 
 **Default** - When no action specified:
@@ -209,7 +196,7 @@ export default class GitService implements TokenRingService {
 - `name: string = "GitService"`: Service identifier
 - `description: string = "Provides Git functionality"`: Service description
 
-**Note:** GitService provides only metadata and registration. Use tools (`git_commit`, `git_rollback`, `git_branch`) or chat commands for actual Git operations.
+**Note:** GitService provides only metadata and registration. Use tools (`commitTool`, `rollbackTool`) or chat commands for actual Git operations.
 
 ## Hooks
 
@@ -581,10 +568,30 @@ agent.errorMessage(`[${name}] Changes committed to git`);
 - **No status tracking**: Only basic Git operations, no advanced Git features (rebase, cherry-pick)
 - **Tool return format**: Tools return only success message without context, all details logged via agent.infoMessage()
 
+## Dependencies
+
+### Production Dependencies
+- `@tokenring-ai/ai-client`: ^0.2.0
+- `@tokenring-ai/app`: ^0.2.0
+- `@tokenring-ai/chat`: ^0.2.0
+- `@tokenring-ai/agent`: ^0.2.0
+- `@tokenring-ai/filesystem`: ^0.2.0
+- `@tokenring-ai/testing`: ^0.2.0
+- `@tokenring-ai/utility`: ^0.2.0
+- `@tokenring-ai/terminal`: ^0.2.0
+- `execa`: ^9.6.1
+- `zod`: ^4.3.6
+
+### Development Dependencies
+- `vitest`: ^4.0.18
+- `typescript`: ^5.9.3
+
 ## Related Package
 
 - **@tokenring-ai/filesystem**: Provides FileSystemService used by git tools for command execution
 - **@tokenring-ai/terminal**: Provides TerminalService used for executing git commands
+- **@tokenring-ai/testing**: Provides TestingService used by autoCommit hook for test status
+- **@tokenring-ai/chat**: Provides ChatService and ChatModelRegistry used by commitTool for AI message generation
 
 ## License
 

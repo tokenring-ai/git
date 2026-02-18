@@ -1,6 +1,6 @@
 {
   "name": "@tokenring-ai/git",
-  "description": "TokenRing Coder Git Intregration",
+  "description": "TokenRing Coder Git Integration",
   "version": "0.2.0",
   "dependencies": {
     "@tokenring-ai/ai-client": "0.2.0",
