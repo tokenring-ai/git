@@ -1,4 +1,5 @@
 import Agent from "@tokenring-ai/agent/Agent";
+import {CommandFailedError} from "@tokenring-ai/agent/AgentError";
 import {TokenRingAgentCommand} from "@tokenring-ai/agent/types";
 import {execute as branch} from "../tools/branch.ts";
 import {execute as commit} from "../tools/commit.ts";
@@ -12,11 +13,10 @@ import {execute as rollback} from "../tools/rollback.ts";
 const description =
   "/git - Git operations. ";
 
-async function execute(remainder: string, agent: Agent) {
+async function execute(remainder: string, agent: Agent): Promise<string> {
 
   if (!remainder || !remainder.trim()) {
-    agent.errorMessage("Usage: /git <commit|rollback|branch> [options]");
-    return;
+    throw new CommandFailedError("Usage: /git <commit|rollback|branch> [options]");
   }
 
   const args = remainder.trim().split(/\s+/);
@@ -31,7 +31,7 @@ async function execute(remainder: string, agent: Agent) {
         commitArgs.message = args.slice(1).join(" ");
       }
       await commit(commitArgs, agent);
-      break;
+      return "Commit completed.";
     }
     case "rollback": {
       let steps = 1;
@@ -40,14 +40,13 @@ async function execute(remainder: string, agent: Agent) {
         if (!isNaN(parsed) && parsed > 0) {
           steps = parsed;
         } else {
-          agent.errorMessage(
+          throw new CommandFailedError(
             `Invalid rollback position: "${args[1]}". Must be a positive integer.`,
           );
-          return;
         }
       }
       await rollback({steps}, agent);
-      break;
+      return `Rolled back ${steps} commit(s).`;
     }
     case "branch": {
       let action: "list" | "create" | "switch" | "delete" | "current" | null = null;
@@ -62,24 +61,22 @@ async function execute(remainder: string, agent: Agent) {
             action = args[1];
             break;
           default:
-            agent.errorMessage(
+            throw new CommandFailedError(
               `Invalid branch action: "${args[1]}". Valid actions are: list, current, create, switch, delete`,
             );
-            return;
         }
 
         await branch({action, branchName: args[2]}, agent);
       } else {
         await branch({action: "list"}, agent);
       }
-      break;
+      return "Branch operation completed.";
     }
 
     default:
-      agent.errorMessage(
+      throw new CommandFailedError(
         `Unknown git action: "${action}". Use 'commit', 'rollback', or 'branch'.`,
       );
-      break;
   }
 }
 
