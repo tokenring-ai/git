@@ -32,12 +32,11 @@ export async function execute(
 
       const chatConfig = chatService.getChatConfig(agent);
 
-      const messages = await chatService.buildChatMessages(
-        "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
+      const messages = await chatService.buildChatMessages({
+        input: "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
         chatConfig,
         agent
-      );
-
+      });
 
       // Keep only the last two messages (system/user) if present
       messages.splice(0, messages.length - 2);
