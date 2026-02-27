@@ -1,5 +1,5 @@
 import git from "./commands/git.ts";
 
-export default {
+export default [
   git,
-};
+];

@@ -137,6 +137,7 @@ Manages git branches. If no action is specified, shows current branch and lists 
 - Branch operations require proper branch names (no spaces or special characters)
 - All git operations use TokenRing Coder as the committer identity`;
 export default {
+  name: "git",
   description,
   execute,
   help,
