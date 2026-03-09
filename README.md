@@ -28,12 +28,11 @@ bun install @tokenring-ai/git
 The main service class that provides Git service metadata.
 
 ```typescript
-import {TokenRingService} from "@tokenring-ai/app/types";
+import GitService from "@tokenring-ai/git/GitService";
 
-export default class GitService implements TokenRingService {
-  readonly name = "GitService";
-  description = "Provides Git functionality";
-}
+const gitService = new GitService();
+console.log(gitService.name); // "GitService"
+console.log(gitService.description); // "Provides Git functionality"
 ```
 
 **Properties:**
@@ -51,7 +50,7 @@ Tools are exported from `tools.ts` and can be registered with the ChatService.
 Commits changes in the source directory to git.
 
 ```typescript
-import commitTool from "@tokenring-ai/git/tools/commit.ts";
+import commitTool from "@tokenring-ai/git/tools/commit";
 
 const name = "git_commit";
 const displayName = "Git/commit";
@@ -78,12 +77,83 @@ const inputSchema = z.object({
 - Returns success message "Changes successfully committed to git"
 - Calls `fileSystem.setDirty(false, agent)` after commit
 
+**Implementation Details:**
+```typescript
+export async function execute(
+  args: z.output<typeof inputSchema>,
+  agent: Agent,
+): Promise<string> {
+  const fileSystem = agent.requireServiceByType(FileSystemService);
+  const terminal = agent.requireServiceByType(TerminalService);
+  const chatModelRegistry = agent.requireServiceByType(ChatModelRegistry);
+  const chatService = agent.requireServiceByType(ChatService);
+
+  const currentMessage = chatService.getLastMessage(agent);
+
+  let gitCommitMessage = args.message; // Use provided message if available
+
+  if (!gitCommitMessage) {
+    // If no message provided, generate one
+    agent.infoMessage(`[${name}] Asking OpenAI to generate a git commit message...`);
+    gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
+    
+    if (currentMessage) {
+      const model = chatService.requireModel(agent);
+      const chatConfig = chatService.getChatConfig(agent);
+      
+      const messages = await chatService.buildChatMessages({
+        input: "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
+        chatConfig,
+        agent
+      });
+
+      // Keep only the last two messages (system/user) if present
+      messages.splice(0, messages.length - 2);
+
+      const client = await chatModelRegistry.getClient(model);
+      const [output] = await client.textChat({
+        messages,
+        tools: {}
+      }, agent);
+      
+      if (output && output.trim() !== "") {
+        gitCommitMessage = output;
+      } else {
+        agent.warningMessage(
+          `[${name}] AI did not provide a commit message, using default.`,
+        );
+      }
+    } else {
+      agent.errorMessage(
+        `[${name}] Most recent chat message does not have a response id, unable to generate a git commit message, using default.`,
+      );
+    }
+  } else {
+    agent.infoMessage(`[${name}] Using provided commit message.`);
+  }
+
+  await terminal.executeCommand("git", ["add", "."], {}, agent);
+  await terminal.executeCommand("git", [
+    "-c",
+    "user.name=TokenRing Coder",
+    "-c",
+    "user.email=coder@tokenring.ai",
+    "commit",
+    "-m",
+    gitCommitMessage,
+  ], {}, agent);
+  
+  fileSystem.setDirty(false, agent);
+  return "Changes successfully committed to git";
+}
+```
+
 #### git_rollback
 
 Rolls back to a previous git commit.
 
 ```typescript
-import rollbackTool from "@tokenring-ai/git/tools/rollback.ts";
+import rollbackTool from "@tokenring-ai/git/tools/rollback";
 
 const name = "git_rollback";
 const displayName = "Git/rollback";
@@ -106,40 +176,54 @@ const inputSchema = z.object({
 - Default behavior rolls back one commit (uses `HEAD~1`)
 - Throws descriptive error on failure
 
-#### git_branch
-
-Manages git branches.
-
+**Implementation Details:**
 ```typescript
-import branchTool from "@tokenring-ai/git/tools/branch.ts";
+export async function execute(
+  args: z.output<typeof inputSchema>,
+  agent: Agent,
+): Promise<string> {
+  const terminal = agent.requireServiceByType(TerminalService);
 
-const name = "git_branch";
-const displayName = "Git/branch";
-const description = "Manages git branches - list, create, switch, or delete branches.";
+  // Ensure there are no uncommitted changes
+  const result = await terminal.executeCommand("git", [
+    "status",
+    "--porcelain",
+  ], {}, agent);
+  const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
+  
+  if (output.trim() !== "") {
+    throw new Error(`[${name}] Rollback aborted: uncommitted changes detected`);
+  }
+
+  try {
+    // Determine which commit to roll back to
+    if (args.commit) {
+      // Rollback to specific commit
+      agent.infoMessage(`[${name}] Rolling back to commit ${args.commit}...`);
+      await terminal.executeCommand("git", ["reset", "--hard", args.commit], {}, agent);
+    } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
+      // Rollback by a number of steps
+      agent.infoMessage(`[${name}] Rolling back ${args.steps} commit(s)...`);
+      await terminal.executeCommand("git", [
+        "reset",
+        "--hard",
+        `HEAD~${args.steps}`,
+      ], {}, agent);
+    } else {
+      // Default: rollback one commit
+      agent.infoMessage(`[${name}] Rolling back to previous commit...`);
+      await terminal.executeCommand("git", ["reset", "--hard", "HEAD~1"], {}, agent);
+    }
+
+    agent.infoMessage(`[${name}] Rollback completed successfully.`);
+    return "Successfully rolled back to previous state";
+  } catch (error: any) {
+    throw new Error(`[${name}] Rollback failed: ${error.shortMessage || error.message}`);
+  }
+}
 ```
 
-**Input Schema:**
-```typescript
-const inputSchema = z.object({
-  action: z
-    .enum(["list", "create", "switch", "delete", "current"])
-    .describe("The branch action to perform"),
-  branchName: z
-    .string()
-    .describe(
-      "The name of the branch (required for create, switch, and delete actions)",
-    )
-    .optional(),
-});
-```
-
-**Functionality:**
-- **list**: Lists all branches (local and remote) using `git branch -a`
-- **current**: Shows current branch using `git branch --show-current`
-- **create**: Creates and switches to a new branch using `git checkout -b`
-- **switch**: Switches to an existing branch using `git checkout`
-- **delete**: Deletes a branch using `git branch -d`
-- **default**: Shows current branch and lists local branches
+**Note:** The `git_branch` tool exists in `pkg/git/tools/branch.ts` but is NOT exported from `tools.ts`. It must be imported directly if needed.
 
 ### Commands
 
@@ -150,10 +234,10 @@ Agent commands are exported from `commands.ts` and registered with AgentCommandS
 Combined git commit/rollback/branch command.
 
 ```typescript
-import gitCommand from "@tokenring-ai/git/commands/git.ts";
+import gitCommand from "@tokenring-ai/git/commands/git";
 
 const name = "git";
-const description = "/git - Git operations. ";
+const description = "/git - Git operations.";
 ```
 
 **Usage:** `/git <action> [options]`
@@ -163,18 +247,72 @@ const description = "/git - Git operations. ";
 - **rollback** - Roll back to a previous commit state
 - **branch** - Manage git branches
 
-**Examples:**
-```
-/git commit
-/git commit "Fix authentication bug"
-/git rollback
-/git rollback 3
-/git branch
-/git branch list
-/git branch current
-/git branch create feature-xyz
-/git branch switch main
-/git branch delete feature-xyz
+**Implementation Details:**
+```typescript
+async function execute(remainder: string, agent: Agent): Promise<string> {
+  if (!remainder || !remainder.trim()) {
+    throw new CommandFailedError("Usage: /git <commit|rollback|branch> [options]");
+  }
+
+  const args = remainder.trim().split(/\s+/);
+  const action = args[0].toLowerCase();
+
+  switch (action) {
+    case "commit": {
+      const commitArgs: { message?: string } = {};
+      if (args.length > 1) {
+        commitArgs.message = args.slice(1).join(" ");
+      }
+      await commit(commitArgs, agent);
+      return "Commit completed.";
+    }
+    case "rollback": {
+      let steps = 1;
+      if (args[1]) {
+        const parsed = parseInt(args[1], 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          steps = parsed;
+        } else {
+          throw new CommandFailedError(
+            `Invalid rollback position: "${args[1]}". Must be a positive integer.`,
+          );
+        }
+      }
+      await rollback({steps}, agent);
+      return `Rolled back ${steps} commit(s).`;
+    }
+    case "branch": {
+      let action: "list" | "create" | "switch" | "delete" | "current" | null = null;
+
+      if (args.length > 1) {
+        switch (args[1]) {
+          case "list":
+          case "current":
+          case "create":
+          case "switch":
+          case "delete":
+            action = args[1];
+            break;
+          default:
+            throw new CommandFailedError(
+              `Invalid branch action: "${args[1]}". Valid actions are: list, current, create, switch, delete`,
+            );
+        }
+
+        await branch({action, branchName: args[2]}, agent);
+      } else {
+        // Default: list all branches (local and remote)
+        await branch({action: "list"}, agent);
+      }
+      return "Branch operation completed.";
+    }
+
+    default:
+      throw new CommandFailedError(
+        `Unknown git action: "${action}". Use 'commit', 'rollback', or 'branch'.`,
+      );
+  }
+}
 ```
 
 ### Hooks
@@ -192,18 +330,40 @@ const autoCommitConfig: HookConfig = {
   name: "autoCommit",
   displayName: "Git/Auto Commit",
   description: "Automatically commit changes to the source directory to git",
-  afterTesting: async (agent: Agent): Promise<void> => {
-    // Implementation
-  }
+  callbacks: [
+    new HookCallback(AfterTestsPassed, async (_data, agent) => {
+      // Implementation
+    })
+  ]
 };
 ```
 
 **Functionality:**
-- Triggered after testing completes
-- Only commits if all tests pass (via TestingService)
-- Only commits if there are uncommitted changes (dirty state)
+- Triggered after testing completes (via `AfterTestsPassed` hook)
+- Only commits if all tests pass (via `TestingService.allTestsPassed()`)
+- Only commits if there are uncommitted changes (dirty state via `FileSystemService.isDirty()`)
 - Commits with empty message, triggering AI-generated commit message
 - Calls `filesystem.setDirty(false, agent)` after commit
+
+**Implementation Details:**
+```typescript
+const callbacks = [
+  new HookCallback(AfterTestsPassed, async (_data, agent) => {
+    const testingService = agent.requireServiceByType(TestingService);
+    const filesystem = agent.requireServiceByType(FileSystemService);
+    
+    if (filesystem.isDirty(agent)) {
+      if (!testingService.allTestsPassed(agent)) {
+        agent.errorMessage(
+          "Not committing changes, due to tests not passing",
+        );
+        return;
+      }
+      await commit({message: ""}, agent);
+    }
+  })
+];
+```
 
 **Required Services:**
 - `TestingService`: Check if all tests passed
@@ -233,9 +393,9 @@ Available slash commands for Git operations:
 
 **`/git branch [action] [branchName]`**
 - Manages git branches
-- If no action specified, shows current branch and lists all branches
+- If no action specified, lists all branches (local and remote)
 - **Actions:**
-  - `list` - List all branches (local and remote)
+  - `list` - List all branches (local and remote) - **default when no action specified**
   - `current` - Show current branch
   - `create` - Create and switch to a new branch
   - `switch` - Switch to an existing branch
@@ -248,7 +408,7 @@ Available slash commands for Git operations:
 The main service class that provides basic Git service metadata.
 
 ```typescript
-import GitService from "@tokenring-ai/git/GitService.ts";
+import GitService from "@tokenring-ai/git/GitService";
 
 const gitService = new GitService();
 console.log(gitService.name); // "GitService"
@@ -266,7 +426,7 @@ The plugin has an empty configuration schema since it does not require any confi
 ```typescript
 import {TokenRingPlugin} from "@tokenring-ai/app";
 import {z} from "zod";
-import plugin from "@tokenring-ai/git/plugin.ts";
+import plugin from "@tokenring-ai/git/plugin";
 
 const packageConfigSchema = z.object({});
 
@@ -317,15 +477,14 @@ await agent.executeTool('git_rollback', { commit: "abc123def" });
 
 ### Branch Management
 
+**Note:** The `git_branch` tool is NOT exported from `tools.ts`. Import it directly from `tools/branch.ts` if needed.
+
 ```typescript
 // List all branches (uses git branch -a)
 await agent.executeTool('git_branch', { action: "list" });
 
 // Show current branch (uses git branch --show-current)
 await agent.executeTool('git_branch', { action: "current" });
-
-// Show current branch and list local branches (default behavior)
-await agent.executeTool('git_branch', {});
 
 // Create a new branch and switch to it
 await agent.executeTool('git_branch', { action: "create", branchName: "feature-xyz" });
@@ -337,12 +496,19 @@ await agent.executeTool('git_branch', { action: "switch", branchName: "main" });
 await agent.executeTool('git_branch', { action: "delete", branchName: "feature-xyz" });
 
 // Using slash command
-// /git branch
+// /git branch (lists all branches - default)
 // /git branch list
 // /git branch current
 // /git branch create feature-xyz
 // /git branch switch main
 // /git branch delete feature-xyz
+```
+
+**Direct tool import (since not exported from tools.ts):**
+```typescript
+import branchTool from "@tokenring-ai/git/tools/branch";
+
+await agent.executeTool('git_branch', { action: "list" });
 ```
 
 ## Integration
@@ -357,11 +523,11 @@ import {TokenRingPlugin} from "@tokenring-ai/app";
 import {AgentCommandService, AgentLifecycleService} from "@tokenring-ai/agent";
 import {ChatService} from "@tokenring-ai/chat";
 import {z} from "zod";
-import agentCommands from "./commands.ts";
-import GitService from "./GitService.js";
-import hooks from "./hooks.ts";
+import agentCommands from "./commands";
+import GitService from "./GitService";
+import hooks from "./hooks";
 import packageJSON from './package.json' with {type: 'json'};
-import tools from "./tools.ts";
+import tools from "./tools";
 
 const packageConfigSchema = z.object({});
 
@@ -418,12 +584,9 @@ await agent.executeTool('git_commit', { message: "My changes" });
 // Use git_rollback tool
 await agent.executeTool('git_rollback', { steps: 5 });
 
-// Use git_branch tool
-await agent.executeTool('git_branch', { action: "create", branchName: "feature-new" });
-
 // Interact via slash commands directly in chat
 // Agent sends: /git commit "Fix bug"
-// Response: Changes successfully committed to git
+// Response: Commit completed.
 ```
 
 ## RPC Endpoints
@@ -451,7 +614,7 @@ This package does not define any state slices. It relies on the FileSystemServic
 
 - **Uncommitted changes**: Rollback aborts with clear message if any uncommitted changes exist
 - **Git command failures**: All tool commands wrap errors in tool name prefix
-- **Premature commit**: Commit only proceeds if repository is not in clean state
+- **Premature commit**: Commit only proceeds if repository is not in clean state (for autoCommit hook)
 
 ### Error Message Format
 
@@ -540,7 +703,7 @@ pkg/git/
 ├── tools/
 │   ├── commit.ts          # git_commit tool implementation
 │   ├── rollback.ts        # git_rollback tool implementation
-│   └── branch.ts          # git_branch tool implementation
+│   └── branch.ts          # git_branch tool implementation (NOT exported from tools.ts)
 ├── hooks/
 │   └── autoCommit.ts      # autoCommit hook implementation
 ├── commands/
@@ -576,15 +739,15 @@ gitCommitMessage = output || "TokenRing Coder Automatic Checkin";
 // git_branch uses switch statement for action routing
 switch (action) {
   case "list":
-    // Execute list logic
+    // Execute list logic (git branch -a)
     break;
   case "create":
     if (!branchName) throw new Error("Branch name required");
-    // Execute create logic
+    // Execute create logic (git checkout -b)
     break;
   // ... other cases
   default:
-    // Default behavior (show current and list)
+    // Note: No default case - all actions must be explicit
 }
 ```
 
@@ -607,7 +770,7 @@ fileSystem.setDirty(false, agent);
 ```typescript
 // All errors prefixed with tool name for consistency
 throw new Error(`[${name}] Rollback failed: ${error.message}`);
-agent.errorMessage(`[${name}] Changes committed to git`);
+agent.infoMessage(`[${name}] Changes committed to git`);
 ```
 
 ## Limitations
@@ -617,6 +780,7 @@ agent.errorMessage(`[${name}] Changes committed to git`);
 - **Rollback**: Does not support interactive confirmation for safe commits
 - **No status tracking**: Only basic Git operations, no advanced Git features (rebase, cherry-pick)
 - **Tool return format**: Tools return only success message without context, all details logged via agent.infoMessage()
+- **git_branch tool**: NOT exported from `tools.ts` - must be imported directly from `tools/branch.ts`
 
 ## Dependencies
 
