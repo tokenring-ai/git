@@ -1,9 +1,9 @@
-import {HookSubscription} from "@tokenring-ai/agent/types";
-import {HookCallback} from "@tokenring-ai/agent/util/hooks";
 import FileSystemService from "@tokenring-ai/filesystem/FileSystemService";
+import type {HookSubscription} from "@tokenring-ai/lifecycle/types";
 import {AfterTestsPassed} from "@tokenring-ai/testing/hooks";
 import TestingService from "@tokenring-ai/testing/TestingService";
 import {execute as commit} from "../tools/commit.ts";
+import { HookCallback } from "@tokenring-ai/lifecycle/util/hooks";
 
 const name = "autoCommit";
 const displayName = "Git/Auto Commit";
