@@ -9,7 +9,7 @@ Git integration package for TokenRing AI agents, providing Git operations within
 - **AI-Powered Commit Messages**: Generate commit messages based on chat context
 - **Automated Commits**: Automatic commits after successful testing via hooks
 - **Interactive Commands**: `/git` slash command for Git operations
-- **Branch Management**: List, create, switch, and delete branches
+- **Branch Management**: List, create, switch, delete, and show current branches
 - **Safe Rollbacks**: Validation before rollbacks to prevent data loss
 - **Filesystem Integration**: Works with TokenRing's filesystem service
 - **Clean State Validation**: Ensures repository is clean before rolling back
@@ -143,6 +143,7 @@ export async function execute(
     gitCommitMessage,
   ], {}, agent);
   
+  agent.infoMessage(`[${name}] Changes committed to git.`);
   fileSystem.setDirty(false, agent);
   return "Changes successfully committed to git";
 }
@@ -184,6 +185,8 @@ export async function execute(
 ): Promise<string> {
   const terminal = agent.requireServiceByType(TerminalService);
 
+  const toolName = "rollback";
+
   // Ensure there are no uncommitted changes
   const result = await terminal.executeCommand("git", [
     "status",
@@ -199,11 +202,11 @@ export async function execute(
     // Determine which commit to roll back to
     if (args.commit) {
       // Rollback to specific commit
-      agent.infoMessage(`[${name}] Rolling back to commit ${args.commit}...`);
+      agent.infoMessage(`[${toolName}] Rolling back to commit ${args.commit}...`);
       await terminal.executeCommand("git", ["reset", "--hard", args.commit], {}, agent);
     } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
       // Rollback by a number of steps
-      agent.infoMessage(`[${name}] Rolling back ${args.steps} commit(s)...`);
+      agent.infoMessage(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
       await terminal.executeCommand("git", [
         "reset",
         "--hard",
@@ -211,11 +214,11 @@ export async function execute(
       ], {}, agent);
     } else {
       // Default: rollback one commit
-      agent.infoMessage(`[${name}] Rolling back to previous commit...`);
+      agent.infoMessage(`[${toolName}] Rolling back to previous commit...`);
       await terminal.executeCommand("git", ["reset", "--hard", "HEAD~1"], {}, agent);
     }
 
-    agent.infoMessage(`[${name}] Rollback completed successfully.`);
+    agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
     return "Successfully rolled back to previous state";
   } catch (error: any) {
     throw new Error(`[${name}] Rollback failed: ${error.shortMessage || error.message}`);
@@ -223,7 +226,123 @@ export async function execute(
 }
 ```
 
+#### git_branch (Not exported from tools.ts)
+
 **Note:** The `git_branch` tool exists in `pkg/git/tools/branch.ts` but is NOT exported from `tools.ts`. It must be imported directly if needed.
+
+Manages git branches - list, create, switch, delete, or show current branch.
+
+```typescript
+import branchTool from "@tokenring-ai/git/tools/branch";
+
+const name = "git_branch";
+const displayName = "Git/branch";
+const description = "Manages git branches - list, create, switch, or delete branches.";
+```
+
+**Input Schema:**
+```typescript
+const inputSchema = z.object({
+  action: z
+    .enum(["list", "create", "switch", "delete", "current"])
+    .describe("The branch action to perform"),
+  branchName: z
+    .string()
+    .describe(
+      "The name of the branch (required for create, switch, and delete actions)",
+    )
+    .optional(),
+});
+```
+
+**Functionality:**
+- **list**: Lists all branches (local and remote) using `git branch -a`
+- **create**: Creates and switches to a new branch using `git checkout -b`
+- **switch**: Switches to an existing branch using `git checkout`
+- **delete**: Deletes a branch using `git branch -d`
+- **current**: Shows current branch using `git branch --show-current`
+- Default (no action): Shows current branch and lists local branches
+
+**Implementation Details:**
+```typescript
+export async function execute(
+  args: z.output<typeof inputSchema>,
+  agent: Agent,
+): Promise<string> {
+  const terminal = agent.requireServiceByType(TerminalService);
+
+  const action = args.action;
+  const branchName = args.branchName;
+
+  switch (action) {
+    case "list": {
+      agent.infoMessage(`[${name}] Listing all branches...`);
+      const result = await terminal.executeCommand("git", ["branch", "-a"], {}, agent);
+      const lines: string[] = [`[${name}] Branches:`];
+      const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
+      output.split("\n").forEach((line: string) => {
+        if (line.trim()) {
+          lines.push(`[${name}]   ${line}`);
+        }
+      });
+      agent.infoMessage(lines.join("\n"));
+      return "Branch list displayed successfully";
+    }
+    case "create":
+      if (!branchName) {
+        throw new Error(`[${name}] Branch name is required for create action`);
+      }
+      agent.infoMessage(`[${name}] Creating new branch: ${branchName}...`);
+      await terminal.executeCommand("git", ["checkout", "-b", branchName], {}, agent);
+      agent.infoMessage(`[${name}] Successfully created and switched to branch: ${branchName}`);
+      return `Branch '${branchName}' created and checked out`;
+
+    case "switch":
+      if (!branchName) {
+        throw new Error(`[${name}] Branch name is required for switch action`);
+      }
+      agent.infoMessage(`[${name}] Switching to branch: ${branchName}...`);
+      await terminal.executeCommand("git", ["checkout", branchName], {}, agent);
+      agent.infoMessage(`[${name}] Successfully switched to branch: ${branchName}`);
+      return `Switched to branch '${branchName}'`;
+
+    case "delete":
+      if (!branchName) {
+        throw new Error(`[${name}] Branch name is required for delete action`);
+      }
+      agent.infoMessage(`[${name}] Deleting branch: ${branchName}...`);
+      await terminal.executeCommand("git", ["branch", "-d", branchName], {}, agent);
+      agent.infoMessage(`[${name}] Successfully deleted branch: ${branchName}`);
+      return `Branch '${branchName}' deleted`;
+
+    case "current": {
+      const result = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
+      const currentBranch = result.status === "success" || result.status === "badExitCode" ? result.output : "";
+      const current = currentBranch.trim();
+      agent.infoMessage(`[${name}] Current branch: ${current}`);
+      return `Current branch: ${current}`;
+    }
+    default: {
+      // Default: show current branch and list local branches
+      const currentResult = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
+      const currentBranchDefault = currentResult.status === "success" || currentResult.status === "badExitCode" ? currentResult.output : "";
+      const branchesResult = await terminal.executeCommand("git", ["branch"], {}, agent);
+      const branches = branchesResult.status === "success" || branchesResult.status === "badExitCode" ? branchesResult.output : "";
+
+      const lines: string[] = [];
+      lines.push(`[${name}] Current branch: ${currentBranchDefault.trim()}`);
+      lines.push(`[${name}] Local branches:`);
+      branches.split("\n").forEach((line: string) => {
+        if (line.trim()) {
+          lines.push(`[${name}]   ${line}`);
+        }
+      });
+      agent.infoMessage(lines.join("\n"));
+      return "Branch information displayed successfully";
+    }
+  }
+}
+```
 
 ### Commands
 
@@ -315,6 +434,61 @@ async function execute(remainder: string, agent: Agent): Promise<string> {
 }
 ```
 
+**Help Text:**
+The command includes comprehensive help text accessible via the framework:
+```
+# Git Operations Command
+
+## Usage
+/git <action> [options]
+
+## Available Actions
+- **commit** - Commit changes in the source directory
+- **rollback** - Roll back to a previous commit state
+- **branch** - Manage git branches
+
+## Detailed Usage
+
+### /git commit [message]
+Commits all changes in the source directory to git. If no message is provided, an AI-generated commit message will be used.
+
+**Examples:**
+/git commit
+/git commit "Fix authentication bug"
+
+### /git rollback [steps]
+Rolls back to a previous commit state.
+- **[steps]** - Number of commits to roll back (default: 1)
+
+**Examples:**
+/git rollback
+/git rollback 3
+
+### /git branch [action] [branchName]
+Manages git branches. If no action is specified, shows current branch and lists all branches.
+
+**Actions:**
+- **list** - List all branches (local and remote)
+- **current** - Show current branch
+- **create** - Create and switch to a new branch
+- **switch** - Switch to an existing branch
+- **delete** - Delete a branch
+
+**Examples:**
+/git branch
+/git branch list
+/git branch current
+/git branch create feature-xyz
+/git branch switch main
+/git branch delete feature-xyz
+
+## Notes
+- Commit operations will automatically stage all changes (git add .)
+- Rollback operations will fail if there are uncommitted changes
+- Branch operations require proper branch names (no spaces or special characters)
+- All git operations use TokenRing Coder as the committer identity
+```
+
 ### Hooks
 
 Hooks are exported from `hooks.ts` and registered with AgentLifecycleService.
@@ -324,9 +498,10 @@ Hooks are exported from `hooks.ts` and registered with AgentLifecycleService.
 Automatically commits changes to the source directory to git after successful testing.
 
 ```typescript
-import {HookConfig} from "@tokenring-ai/agent/types";
+import {HookCallback} from "@tokenring-ai/lifecycle/util/hooks";
+import {AfterTestsPassed} from "@tokenring-ai/testing/hooks";
 
-const autoCommitConfig: HookConfig = {
+const autoCommitConfig = {
   name: "autoCommit",
   displayName: "Git/Auto Commit",
   description: "Automatically commit changes to the source directory to git",
@@ -347,6 +522,9 @@ const autoCommitConfig: HookConfig = {
 
 **Implementation Details:**
 ```typescript
+import { HookCallback } from "@tokenring-ai/lifecycle/util/hooks";
+import { AfterTestsPassed } from "@tokenring-ai/testing/hooks";
+
 const callbacks = [
   new HookCallback(AfterTestsPassed, async (_data, agent) => {
     const testingService = agent.requireServiceByType(TestingService);
@@ -552,7 +730,7 @@ export default {
 
     // Register hooks with AgentLifecycleService
     app.waitForService(AgentLifecycleService, lifecycleService =>
-      lifecycleService.addHooks(packageJSON.name, hooks)
+      lifecycleService.addHooks(hooks)
     );
   }
 } satisfies TokenRingPlugin<typeof packageConfigSchema>;
@@ -747,7 +925,7 @@ switch (action) {
     break;
   // ... other cases
   default:
-    // Note: No default case - all actions must be explicit
+    // Default: show current branch and list local branches
 }
 ```
 
@@ -793,6 +971,7 @@ agent.infoMessage(`[${name}] Changes committed to git`);
 | @tokenring-ai/chat | 0.2.0 |
 | @tokenring-ai/agent | 0.2.0 |
 | @tokenring-ai/filesystem | 0.2.0 |
+| @tokenring-ai/lifecycle | 0.2.0 |
 | @tokenring-ai/testing | 0.2.0 |
 | @tokenring-ai/utility | 0.2.0 |
 | @tokenring-ai/terminal | 0.2.0 |
@@ -813,6 +992,7 @@ agent.infoMessage(`[${name}] Changes committed to git`);
 - **@tokenring-ai/testing**: Provides TestingService used by autoCommit hook for test status
 - **@tokenring-ai/chat**: Provides ChatService and ChatModelRegistry used by commitTool for AI message generation
 - **@tokenring-ai/agent**: Provides Agent and Agent lifecycle management
+- **@tokenring-ai/lifecycle**: Provides AgentLifecycleService and hook infrastructure
 
 ## License
 
