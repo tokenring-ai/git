@@ -1,6 +1,5 @@
-import Agent from "@tokenring-ai/agent/Agent";
 import {CommandFailedError} from "@tokenring-ai/agent/AgentError";
-import {TokenRingAgentCommand} from "@tokenring-ai/agent/types";
+import {AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand} from "@tokenring-ai/agent/types";
 import {execute as branch} from "../tools/branch.ts";
 import {execute as commit} from "../tools/commit.ts";
 import {execute as rollback} from "../tools/rollback.ts";
@@ -12,7 +11,17 @@ import {execute as rollback} from "../tools/rollback.ts";
 
 const description = "Git operations. ";
 
-async function execute(remainder: string, agent: Agent): Promise<string> {
+const inputSchema = {
+  args: {},
+  prompt: {
+    description: "Git action and options: <commit|rollback|branch> [options]",
+    required: true,
+  },
+  allowAttachments: false,
+} as const satisfies AgentCommandInputSchema;
+
+async function execute({prompt, agent}: AgentCommandInputType<typeof inputSchema>): Promise<string> {
+  const remainder = prompt;
 
   if (!remainder || !remainder.trim()) {
     throw new CommandFailedError("Usage: /git <commit|rollback|branch> [options]");
@@ -135,9 +144,11 @@ Manages git branches. If no action is specified, shows current branch and lists 
 - Rollback operations will fail if there are uncommitted changes
 - Branch operations require proper branch names (no spaces or special characters)
 - All git operations use TokenRing Coder as the committer identity`;
+
 export default {
   name: "git",
   description,
+  inputSchema,
   execute,
   help,
-} satisfies TokenRingAgentCommand;
+} satisfies TokenRingAgentCommand<typeof inputSchema>;
