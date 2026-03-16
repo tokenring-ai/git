@@ -356,7 +356,7 @@ Combined git commit/rollback/branch command.
 import gitCommand from "@tokenring-ai/git/commands/git";
 
 const name = "git";
-const description = "/git - Git operations.";
+const description = "Git operations.";
 ```
 
 **Usage:** `/git <action> [options]`

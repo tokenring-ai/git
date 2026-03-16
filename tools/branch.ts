@@ -99,8 +99,7 @@ export async function execute(
   }
 }
 
-const description =
-  "Manages git branches - list, create, switch, or delete branches.";
+const description = "Manages git branches - list, create, switch, or delete branches.";
 const inputSchema = z.object({
   action: z
     .enum(["list", "create", "switch", "delete", "current"])

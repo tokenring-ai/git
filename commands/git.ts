@@ -10,8 +10,7 @@ import {execute as rollback} from "../tools/rollback.ts";
  * Usage: /git commit | /git rollback [position] | /git branch [options]
  */
 
-const description =
-  "/git - Git operations. ";
+const description = "Git operations. ";
 
 async function execute(remainder: string, agent: Agent): Promise<string> {
 
