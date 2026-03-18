@@ -3,19 +3,13 @@ import {execute as commit} from "../../tools/commit.ts";
 
 const inputSchema = {
   args: {},
-  positionals: [{
-    name: "message",
-    description: "Commit message",
-    required: false,
-    greedy: true,
-  }],
-  allowAttachments: false,
+  remainder: {name: "message", description: "Commit message"}
 } as const satisfies AgentCommandInputSchema;
 
-async function execute({positionals, agent}: AgentCommandInputType<typeof inputSchema>): Promise<string> {
+async function execute({remainder, agent}: AgentCommandInputType<typeof inputSchema>): Promise<string> {
   const commitArgs: { message?: string } = {};
-  if (positionals.message) {
-    commitArgs.message = positionals.message;
+  if (remainder) {
+    commitArgs.message = remainder;
   }
   await commit(commitArgs, agent);
   return "Commit completed.";

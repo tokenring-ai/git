@@ -10,8 +10,7 @@ const inputSchema = {
       required: false,
       description: "Number of commits to roll back",
     }
-  },
-  allowAttachments: false,
+  }
 } as const satisfies AgentCommandInputSchema;
 
 async function execute({args, agent}: AgentCommandInputType<typeof inputSchema>): Promise<string> {
