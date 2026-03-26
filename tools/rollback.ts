@@ -1,6 +1,7 @@
 import Agent from "@tokenring-ai/agent/Agent";
 import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {TerminalService} from "@tokenring-ai/terminal";
+import formatLogMessages from "@tokenring-ai/utility/string/formatLogMessage";
 import {z} from "zod";
 
 const name = "git_rollback";
@@ -24,32 +25,27 @@ export async function execute(
     throw new Error(`[${name}] Rollback aborted: uncommitted changes detected`);
   }
 
-  try {
-    // Determine which commit to roll back to
-    if (args.commit) {
-      // Rollback to specific commit
-      agent.infoMessage(`[${toolName}] Rolling back to commit ${args.commit}...`);
-      await terminal.executeCommand("git", ["reset", "--hard", args.commit], {}, agent);
-    } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
-      // Rollback by a number of steps
-      agent.infoMessage(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
-      await terminal.executeCommand("git", [
-        "reset",
-        "--hard",
-        `HEAD~${args.steps}`,
-      ], {}, agent);
-    } else {
-      // Default: rollback one commit
-      agent.infoMessage(`[${toolName}] Rolling back to previous commit...`);
-      await terminal.executeCommand("git", ["reset", "--hard", "HEAD~1"], {}, agent);
-    }
-
-    agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
-    return "Successfully rolled back to previous state";
-  } catch (error: any) {
-    // Throw error directly without prior logging
-    throw new Error(`[${name}] Rollback failed: ${error.shortMessage || error.message}`);
+  // Determine which commit to roll back to
+  if (args.commit) {
+    // Rollback to specific commit
+    agent.infoMessage(`[${toolName}] Rolling back to commit ${args.commit}...`);
+    await terminal.executeCommand("git", ["reset", "--hard", args.commit], {}, agent);
+  } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
+    // Rollback by a number of steps
+    agent.infoMessage(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
+    await terminal.executeCommand("git", [
+      "reset",
+      "--hard",
+      `HEAD~${args.steps}`,
+    ], {}, agent);
+  } else {
+    // Default: rollback one commit
+    agent.infoMessage(`[${toolName}] Rolling back to previous commit...`);
+    await terminal.executeCommand("git", ["reset", "--hard", "HEAD~1"], {}, agent);
   }
+
+  agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
+  return "Successfully rolled back to previous state";
 }
 
 const description = "Rolls back to a previous git commit.";

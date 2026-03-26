@@ -72,7 +72,7 @@ export async function execute(
       // Show current branch
       const result = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
       const currentBranch = result.status === "success" || result.status === "badExitCode" ? result.output : "";
-      const current = (currentBranch).trim();
+      const current = currentBranch.trim();
       agent.infoMessage(`[${name}] Current branch: ${current}`);
       return `Current branch: ${current}`;
     }
@@ -85,7 +85,7 @@ export async function execute(
 
       const lines: string[] = [];
       lines.push(
-        `[${name}] Current branch: ${(currentBranchDefault).trim()}`,
+        `[${name}] Current branch: ${currentBranchDefault.trim()}`,
       );
       lines.push(`[${name}] Local branches:`);
       branches.split("\n").forEach((line: string) => {

@@ -2,13 +2,13 @@
 
 ## Overview
 
-Git integration package for TokenRing AI agents, providing Git operations within the agent framework. This package enables Git operations including commits, rollbacks, and branch management with AI-generated commit messages. It works seamlessly with the TokenRing ecosystem, providing both programmatic tools and interactive slash commands for Git operations.
+Git integration package for TokenRing AI agents, providing Git operations within the agent framework. This package enables Git operations including commits, rollbacks, and branch management with AI-generated commit messages. It works seamlessly with the TokenRing ecosystem, providing both programmatic tools and interactive commands for Git operations.
 
 ## Key Features
 
 - **AI-Powered Commit Messages**: Generate commit messages based on chat context
 - **Automated Commits**: Automatic commits after successful testing via hooks
-- **Interactive Commands**: `/git` slash command for Git operations
+- **Interactive Commands**: Multiple git commands for Git operations
 - **Branch Management**: List, create, switch, delete, and show current branches
 - **Safe Rollbacks**: Validation before rollbacks to prevent data loss
 - **Filesystem Integration**: Works with TokenRing's filesystem service
@@ -39,7 +39,7 @@ console.log(gitService.description); // "Provides Git functionality"
 - `name: string = "GitService"`: Service identifier
 - `description: string = "Provides Git functionality"`: Service description
 
-**Note:** GitService provides only metadata and registration. Use tools or chat commands for actual Git operations.
+**Note:** GitService provides only metadata and registration. Use tools or commands for actual Git operations.
 
 ### Tools
 
@@ -228,7 +228,7 @@ export async function execute(
 
 #### git_branch (Not exported from tools.ts)
 
-**Note:** The `git_branch` tool exists in `pkg/git/tools/branch.ts` but is NOT exported from `tools.ts`. It must be imported directly if needed.
+**Note:** The `git_branch` tool exists in `tools/branch.ts` but is NOT exported from `tools.ts`. It must be imported directly if needed.
 
 Manages git branches - list, create, switch, delete, or show current branch.
 
@@ -344,156 +344,228 @@ export async function execute(
 }
 ```
 
-### Commands
+## Commands
 
-Agent commands are exported from `commands.ts` and registered with AgentCommandService.
+Agent commands are exported from `commands.ts` and registered with AgentCommandService. Each command is a separate, individually registered command.
 
-#### /git Command
+### git commit
 
-Combined git commit/rollback/branch command.
+Commit changes in the source directory.
 
 ```typescript
-import gitCommand from "@tokenring-ai/git/commands/git";
+import commitCommand from "@tokenring-ai/git/commands/git/commit";
 
-const name = "git";
-const description = "Git operations.";
+const name = "git commit";
+const description = "Commit changes in the source directory";
 ```
 
-**Usage:** `/git <action> [options]`
+**Usage:** `git commit [message]`
 
-**Available Actions:**
-- **commit** - Commit changes in the source directory
-- **rollback** - Roll back to a previous commit state
-- **branch** - Manage git branches
-
-**Implementation Details:**
+**Input Schema:**
 ```typescript
-async function execute(remainder: string, agent: Agent): Promise<string> {
-  if (!remainder || !remainder.trim()) {
-    throw new CommandFailedError("Usage: /git <commit|rollback|branch> [options]");
-  }
-
-  const args = remainder.trim().split(/\s+/);
-  const action = args[0].toLowerCase();
-
-  switch (action) {
-    case "commit": {
-      const commitArgs: { message?: string } = {};
-      if (args.length > 1) {
-        commitArgs.message = args.slice(1).join(" ");
-      }
-      await commit(commitArgs, agent);
-      return "Commit completed.";
-    }
-    case "rollback": {
-      let steps = 1;
-      if (args[1]) {
-        const parsed = parseInt(args[1], 10);
-        if (!isNaN(parsed) && parsed > 0) {
-          steps = parsed;
-        } else {
-          throw new CommandFailedError(
-            `Invalid rollback position: "${args[1]}". Must be a positive integer.`,
-          );
-        }
-      }
-      await rollback({steps}, agent);
-      return `Rolled back ${steps} commit(s).`;
-    }
-    case "branch": {
-      let action: "list" | "create" | "switch" | "delete" | "current" | null = null;
-
-      if (args.length > 1) {
-        switch (args[1]) {
-          case "list":
-          case "current":
-          case "create":
-          case "switch":
-          case "delete":
-            action = args[1];
-            break;
-          default:
-            throw new CommandFailedError(
-              `Invalid branch action: "${args[1]}". Valid actions are: list, current, create, switch, delete`,
-            );
-        }
-
-        await branch({action, branchName: args[2]}, agent);
-      } else {
-        // Default: list all branches (local and remote)
-        await branch({action: "list"}, agent);
-      }
-      return "Branch operation completed.";
-    }
-
-    default:
-      throw new CommandFailedError(
-        `Unknown git action: "${action}". Use 'commit', 'rollback', or 'branch'.`,
-      );
-  }
-}
+const inputSchema = {
+  args: {},
+  remainder: {name: "message", description: "Commit message"}
+} as const satisfies AgentCommandInputSchema;
 ```
 
-**Help Text:**
-The command includes comprehensive help text accessible via the framework:
+**Functionality:**
+- Commits all changes in the source directory to git
+- If no message is provided, an AI-generated commit message will be used
+- Stages all changes before committing (git add .)
+- Uses "TokenRing Coder" as the committer identity
+
+**Example:**
 ```
-# Git Operations Command
-
-## Usage
-/git <action> [options]
-
-## Available Actions
-- **commit** - Commit changes in the source directory
-- **rollback** - Roll back to a previous commit state
-- **branch** - Manage git branches
-
-## Detailed Usage
-
-### /git commit [message]
-Commits all changes in the source directory to git. If no message is provided, an AI-generated commit message will be used.
-
-**Examples:**
 /git commit
-/git commit "Fix authentication bug"
-
-### /git rollback [steps]
-Rolls back to a previous commit state.
-- **[steps]** - Number of commits to roll back (default: 1)
-
-**Examples:**
-/git rollback
-/git rollback 3
-
-### /git branch [action] [branchName]
-Manages git branches. If no action is specified, shows current branch and lists all branches.
-
-**Actions:**
-- **list** - List all branches (local and remote)
-- **current** - Show current branch
-- **create** - Create and switch to a new branch
-- **switch** - Switch to an existing branch
-- **delete** - Delete a branch
-
-**Examples:**
-/git branch
-/git branch list
-/git branch current
-/git branch create feature-xyz
-/git branch switch main
-/git branch delete feature-xyz
-
-## Notes
-- Commit operations will automatically stage all changes (git add .)
-- Rollback operations will fail if there are uncommitted changes
-- Branch operations require proper branch names (no spaces or special characters)
-- All git operations use TokenRing Coder as the committer identity
+/git commit Fix authentication bug
 ```
 
-### Hooks
+### git rollback
+
+Roll back to a previous commit state.
+
+```typescript
+import rollbackCommand from "@tokenring-ai/git/commands/git/rollback";
+
+const name = "git rollback";
+const description = "Roll back to a previous commit state";
+```
+
+**Usage:** `git rollback [--steps <number>]`
+
+**Input Schema:**
+```typescript
+const inputSchema = {
+  args: {
+    "--steps": {
+      type: "number",
+      minimum: 1,
+      defaultValue: 1,
+      required: false,
+      description: "Number of commits to roll back",
+    }
+  }
+} as const satisfies AgentCommandInputSchema;
+```
+
+**Functionality:**
+- Rolls back to a previous commit state
+- **[steps]** - Number of commits to roll back (default: 1)
+- Validation: Aborts if there are uncommitted changes
+
+**Example:**
+```
+/git rollback
+/git rollback --steps 3
+```
+
+### git branch list
+
+List all branches (local and remote).
+
+```typescript
+import branchListCommand from "@tokenring-ai/git/commands/git/branch/list";
+
+const name = "git branch list";
+const description = "List all branches (local and remote)";
+```
+
+**Usage:** `git branch list`
+
+**Functionality:**
+- Lists all branches (local and remote) using `git branch -a`
+
+**Example:**
+```
+/git branch list
+```
+
+### git branch create
+
+Create and switch to a new branch.
+
+```typescript
+import branchCreateCommand from "@tokenring-ai/git/commands/git/branch/create";
+
+const name = "git branch create";
+const description = "Create and switch to a new branch";
+```
+
+**Usage:** `git branch create <branchName>`
+
+**Input Schema:**
+```typescript
+const inputSchema = {
+  args: {},
+  positionals: [{
+    name: "branchName",
+    description: "The name of the new branch",
+    required: true,
+  }]
+} as const satisfies AgentCommandInputSchema;
+```
+
+**Functionality:**
+- Creates a new branch and switches to it using `git checkout -b`
+
+**Example:**
+```
+/git branch create feature-xyz
+```
+
+### git branch switch
+
+Switch to an existing branch.
+
+```typescript
+import branchSwitchCommand from "@tokenring-ai/git/commands/git/branch/switch";
+
+const name = "git branch switch";
+const description = "Switch to an existing branch";
+```
+
+**Usage:** `git branch switch <branchName>`
+
+**Input Schema:**
+```typescript
+const inputSchema = {
+  args: {},
+  positionals: [{
+    name: "branchName",
+    description: "The name of the branch to switch to",
+    required: true,
+  }]
+} as const satisfies AgentCommandInputSchema;
+```
+
+**Functionality:**
+- Switches to an existing branch using `git checkout`
+
+**Example:**
+```
+/git branch switch main
+```
+
+### git branch delete
+
+Delete a branch.
+
+```typescript
+import branchDeleteCommand from "@tokenring-ai/git/commands/git/branch/delete";
+
+const name = "git branch delete";
+const description = "Delete a branch";
+```
+
+**Usage:** `git branch delete <branchName>`
+
+**Input Schema:**
+```typescript
+const inputSchema = {
+  args: {},
+  positionals: [{
+    name: "branchName",
+    description: "The name of the branch to delete",
+    required: true,
+  }]
+} as const satisfies AgentCommandInputSchema;
+```
+
+**Functionality:**
+- Deletes a branch using `git branch -d`
+
+**Example:**
+```
+/git branch delete feature-xyz
+```
+
+### git branch current
+
+Show current branch.
+
+```typescript
+import branchCurrentCommand from "@tokenring-ai/git/commands/git/branch/current";
+
+const name = "git branch current";
+const description = "Show current branch";
+```
+
+**Usage:** `git branch current`
+
+**Functionality:**
+- Shows the currently active git branch using `git branch --show-current`
+
+**Example:**
+```
+/git branch current
+```
+
+## Hooks
 
 Hooks are exported from `hooks.ts` and registered with AgentLifecycleService.
 
-#### autoCommit
+### autoCommit
 
 Automatically commits changes to the source directory to git after successful testing.
 
@@ -547,38 +619,6 @@ const callbacks = [
 - `TestingService`: Check if all tests passed
 - `FileSystemService`: Check dirty state
 
-## Chat Commands
-
-Available slash commands for Git operations:
-
-- `/git commit [message]` - Commit changes with optional message (AI-generated if not provided)
-- `/git rollback [steps]` - Rollback by specified number of commits (default: 1)
-- `/git branch [action] [branchName]` - Branch management commands
-
-### Detailed Commands
-
-**`/git commit [message]`**
-- Commits all changes in the source directory to git
-- If no message is provided, an AI-generated commit message will be used
-- Stages all changes before committing (git add .)
-- Uses "TokenRing Coder" as the committer identity
-
-**`/git rollback [steps]`**
-- Rolls back to a previous commit state
-- **[steps]** - Number of commits to roll back (default: 1)
-- Validation: Aborts if there are uncommitted changes
-- Supports rollback by number of steps or to specific commit hash
-
-**`/git branch [action] [branchName]`**
-- Manages git branches
-- If no action specified, lists all branches (local and remote)
-- **Actions:**
-  - `list` - List all branches (local and remote) - **default when no action specified**
-  - `current` - Show current branch
-  - `create` - Create and switch to a new branch
-  - `switch` - Switch to an existing branch
-  - `delete` - Delete a branch
-
 ## Services
 
 ### GitService
@@ -620,8 +660,8 @@ app.use(plugin, {});
 // Using tool
 await agent.executeTool('git_commit', { message: "Update README" });
 
-// Using slash command
-// Agent command service will execute: /git commit "Update README"
+// Using command
+// Agent command service will execute: git commit "Update README"
 ```
 
 ### Commit with AI-Generated Message
@@ -630,8 +670,8 @@ await agent.executeTool('git_commit', { message: "Update README" });
 // Using tool
 await agent.executeTool('git_commit', {});
 
-// Using slash command
-// Agent command service will execute: /git commit
+// Using command
+// Agent command service will execute: git commit
 // AI generates message from last 2 chat messages
 ```
 
@@ -647,10 +687,9 @@ await agent.executeTool('git_rollback', { steps: 3 });
 // Rollback to specific commit
 await agent.executeTool('git_rollback', { commit: "abc123def" });
 
-// Using slash command
-// /git rollback
-// /git rollback 3
-// /git rollback abc123def
+// Using command
+// git rollback
+// git rollback --steps 3
 ```
 
 ### Branch Management
@@ -673,13 +712,12 @@ await agent.executeTool('git_branch', { action: "switch", branchName: "main" });
 // Delete a branch
 await agent.executeTool('git_branch', { action: "delete", branchName: "feature-xyz" });
 
-// Using slash command
-// /git branch (lists all branches - default)
-// /git branch list
-// /git branch current
-// /git branch create feature-xyz
-// /git branch switch main
-// /git branch delete feature-xyz
+// Using commands
+// git branch list
+// git branch current
+// git branch create feature-xyz
+// git branch switch main
+// git branch delete feature-xyz
 ```
 
 **Direct tool import (since not exported from tools.ts):**
@@ -697,12 +735,13 @@ The plugin automatically registers GitService, tools, and hooks with the TokenRi
 
 **Plugin Structure:**
 ```typescript
+import {AgentCommandService} from "@tokenring-ai/agent";
 import {TokenRingPlugin} from "@tokenring-ai/app";
-import {AgentCommandService, AgentLifecycleService} from "@tokenring-ai/agent";
 import {ChatService} from "@tokenring-ai/chat";
+import {AgentLifecycleService} from "@tokenring-ai/lifecycle";
 import {z} from "zod";
 import agentCommands from "./commands";
-import GitService from "./GitService";
+import GitService from "./GitService.js";
 import hooks from "./hooks";
 import packageJSON from './package.json' with {type: 'json'};
 import tools from "./tools";
@@ -713,26 +752,26 @@ export default {
   name: packageJSON.name,
   version: packageJSON.version,
   description: packageJSON.description,
-  config: packageConfigSchema,
   install(app, config) {
     // Register tools with ChatService
     app.waitForService(ChatService, chatService =>
       chatService.addTools(tools)
     );
-
+    
     // Register commands with AgentCommandService
     app.waitForService(AgentCommandService, agentCommandService =>
       agentCommandService.addAgentCommands(agentCommands)
     );
-
+    
     // Register GitService
     app.addServices(new GitService());
-
+    
     // Register hooks with AgentLifecycleService
     app.waitForService(AgentLifecycleService, lifecycleService =>
       lifecycleService.addHooks(hooks)
     );
-  }
+  },
+  config: packageConfigSchema
 } satisfies TokenRingPlugin<typeof packageConfigSchema>;
 ```
 
@@ -744,7 +783,7 @@ For tools to function properly, the following services must be available:
 - **ChatModelRegistry**: Used by git_commit for AI message generation
 - **FileSystemService**: Used for state checks
 - **TerminalService**: Used for all Git command execution
-- **AgentCommandService**: Required for slash command registration
+- **AgentCommandService**: Required for command registration
 - **TestingService**: Used by autoCommit hook for test status
 - **AgentLifecycleService**: Required for hook registration
 
@@ -762,8 +801,8 @@ await agent.executeTool('git_commit', { message: "My changes" });
 // Use git_rollback tool
 await agent.executeTool('git_rollback', { steps: 5 });
 
-// Interact via slash commands directly in chat
-// Agent sends: /git commit "Fix bug"
+// Interact via commands directly
+// Agent sends: git commit "Fix bug"
 // Response: Commit completed.
 ```
 
@@ -785,8 +824,7 @@ This package does not define any state slices. It relies on the FileSystemServic
 
 - **Branch name required**: Throws error if branchName is not provided for create/switch/delete actions
 - **Invalid rollback position**: If specified as non-positive integer, throws descriptive error
-- **Invalid branch action**: If action is not one of list/create/switch/delete/current, throws descriptive error
-- **Unknown git action**: If action is not commit/rollback/branch, throws descriptive error
+- **Unknown command**: If command is not recognized, throws descriptive error
 
 ### Git Errors
 
@@ -876,7 +914,7 @@ pkg/git/
 ├── index.ts                # Main export (GitService)
 ├── plugin.ts               # Plugin registration and setup
 ├── tools.ts                # Tool exports (commitTool, rollbackTool)
-├── commands.ts             # Command exports (git command)
+├── commands.ts             # Command exports (all git commands)
 ├── hooks.ts                # Hook exports (autoCommit hook)
 ├── tools/
 │   ├── commit.ts          # git_commit tool implementation
@@ -885,7 +923,15 @@ pkg/git/
 ├── hooks/
 │   └── autoCommit.ts      # autoCommit hook implementation
 ├── commands/
-│   └── git.ts             # /git command implementation
+│   ├── git/
+│   │   ├── commit.ts      # git commit command implementation
+│   │   ├── rollback.ts    # git rollback command implementation
+│   │   └── branch/
+│   │       ├── list.ts    # git branch list command implementation
+│   │       ├── create.ts  # git branch create command implementation
+│   │       ├── switch.ts  # git branch switch command implementation
+│   │       ├── delete.ts  # git branch delete command implementation
+│   │       └── current.ts # git branch current command implementation
 ├── package.json
 ├── vitest.config.ts
 └── LICENSE
@@ -982,8 +1028,8 @@ agent.infoMessage(`[${name}] Changes committed to git`);
 
 | Package | Version |
 |---------|---------|
-| vitest | ^4.0.18 |
-| typescript | ^5.9.3 |
+| vitest | ^4.1.1 |
+| typescript | ^6.0.2 |
 
 ## Related Components
 
