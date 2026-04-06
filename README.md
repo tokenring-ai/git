@@ -18,7 +18,7 @@ Git integration package for TokenRing AI agents, providing Git operations within
 ## Installation
 
 ```bash
-bun install @tokenring-ai/git
+bun add @tokenring-ai/git
 ```
 
 ## Core Components
@@ -72,7 +72,7 @@ const inputSchema = z.object({
 **Functionality:**
 - Commits all changes to git (stages all changes with `git add .`)
 - Uses AI to generate commit messages if none provided
-- Matches against last two chat messages for context
+- Uses last two chat messages (system/user) for context when generating messages
 - Sets git user identity as "TokenRing Coder" with email "coder@tokenring.ai"
 - Returns success message "Changes successfully committed to git"
 - Calls `fileSystem.setDirty(false, agent)` after commit
@@ -108,7 +108,9 @@ export async function execute(
       });
 
       // Keep only the last two messages (system/user) if present
-      messages.splice(0, messages.length - 2);
+      if (messages.length > 2) {
+        messages.splice(0, messages.length - 2);
+      }
 
       const client = await chatModelRegistry.getClient(model);
       const [output] = await client.textChat({
@@ -237,7 +239,7 @@ import branchTool from "@tokenring-ai/git/tools/branch";
 
 const name = "git_branch";
 const displayName = "Git/branch";
-const description = "Manages git branches - list, create, switch, or delete branches.";
+const description = "Manages git branches - list, create, switch, delete, or show current branch.";
 ```
 
 **Input Schema:**
@@ -411,7 +413,7 @@ const inputSchema = {
 
 **Functionality:**
 - Rolls back to a previous commit state
-- **[steps]** - Number of commits to roll back (default: 1)
+- `--steps` - Number of commits to roll back (default: 1)
 - Validation: Aborts if there are uncommitted changes
 
 **Example:**
@@ -948,8 +950,10 @@ const messages = await chatService.buildChatMessages(
   agent
 );
 
-// Keep only last 2 messages (system/user)
-messages.splice(0, messages.length - 2);
+// Keep only last 2 messages (system/user) if present
+if (messages.length > 2) {
+  messages.splice(0, messages.length - 2);
+}
 
 // Generate message via AI
 const [output] = await client.textChat({ messages, tools: {} }, agent);
