@@ -1,7 +1,6 @@
 import Agent from "@tokenring-ai/agent/Agent";
 import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {TerminalService} from "@tokenring-ai/terminal";
-import formatLogMessages from "@tokenring-ai/utility/string/formatLogMessage";
 import {z} from "zod";
 
 const name = "git_rollback";
