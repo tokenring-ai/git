@@ -1,12 +1,15 @@
-import {AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand} from "@tokenring-ai/agent/types";
+import type {AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand,} from "@tokenring-ai/agent/types";
 import {execute as commit} from "../../tools/commit.ts";
 
 const inputSchema = {
   args: {},
-  remainder: {name: "message", description: "Commit message"}
+  remainder: {name: "message", description: "Commit message"},
 } as const satisfies AgentCommandInputSchema;
 
-async function execute({remainder, agent}: AgentCommandInputType<typeof inputSchema>): Promise<string> {
+async function execute({
+                         remainder,
+                         agent,
+                       }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
   const commitArgs: { message?: string } = {};
   if (remainder) {
     commitArgs.message = remainder;

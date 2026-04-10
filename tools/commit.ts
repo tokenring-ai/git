@@ -1,7 +1,7 @@
-import Agent from "@tokenring-ai/agent/Agent";
+import type Agent from "@tokenring-ai/agent/Agent";
 import {ChatModelRegistry} from "@tokenring-ai/ai-client/ModelRegistry";
 import {ChatService} from "@tokenring-ai/chat";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {TerminalService} from "@tokenring-ai/terminal";
 import {z} from "zod";
@@ -25,7 +25,9 @@ export async function execute(
 
   if (!gitCommitMessage) {
     // If no message provided, generate one
-    agent.infoMessage(`[${name}] Asking OpenAI to generate a git commit message...`);
+    agent.infoMessage(
+      `[${name}] Asking OpenAI to generate a git commit message...`,
+    );
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
     if (currentMessage) {
       const model = chatService.requireModel(agent);
@@ -33,9 +35,10 @@ export async function execute(
       const chatConfig = chatService.getChatConfig(agent);
 
       const messages = await chatService.buildChatMessages({
-        input: "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
+        input:
+          "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
         chatConfig,
-        agent
+        agent,
       });
 
       // Keep only the last two messages (system/user) if present
@@ -44,10 +47,13 @@ export async function execute(
       }
 
       const client = await chatModelRegistry.getClient(model);
-      const [output] = await client.textChat({
-        messages,
-        tools: {}
-      }, agent);
+      const [output] = await client.textChat(
+        {
+          messages,
+          tools: {},
+        },
+        agent,
+      );
       if (output && output.trim() !== "") {
         // Ensure AI provides a non-empty message
         gitCommitMessage = output;
@@ -66,15 +72,20 @@ export async function execute(
   }
 
   await terminal.executeCommand("git", ["add", "."], {}, agent);
-  await terminal.executeCommand("git", [
-    "-c",
-    "user.name=TokenRing Coder",
-    "-c",
-    "user.email=coder@tokenring.ai",
-    "commit",
-    "-m",
-    gitCommitMessage,
-  ], {}, agent);
+  await terminal.executeCommand(
+    "git",
+    [
+      "-c",
+      "user.name=TokenRing Coder",
+      "-c",
+      "user.email=coder@tokenring.ai",
+      "commit",
+      "-m",
+      gitCommitMessage,
+    ],
+    {},
+    agent,
+  );
   agent.infoMessage(`[${name}] Changes committed to git.`);
 
   fileSystem.setDirty(false, agent);
@@ -93,5 +104,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

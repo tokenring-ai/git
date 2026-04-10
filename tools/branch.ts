@@ -1,5 +1,5 @@
-import Agent from "@tokenring-ai/agent/Agent";
-import {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type Agent from "@tokenring-ai/agent/Agent";
+import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
 import {TerminalService} from "@tokenring-ai/terminal";
 import {z} from "zod";
 
@@ -20,12 +20,17 @@ export async function execute(
     case "list": {
       // List all branches
       agent.infoMessage(`[${name}] Listing all branches...`);
-      const result = await terminal.executeCommand("git", [
-        "branch",
-        "-a",
-      ], {}, agent);
+      const result = await terminal.executeCommand(
+        "git",
+        ["branch", "-a"],
+        {},
+        agent,
+      );
       const lines: string[] = [`[${name}] Branches:`];
-      const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
+      const output =
+        result.status === "success" || result.status === "badExitCode"
+          ? result.output
+          : "";
       output.split("\n").forEach((line: string) => {
         if (line.trim()) {
           lines.push(`[${name}]   ${line}`);
@@ -40,7 +45,12 @@ export async function execute(
       }
       // Create a new branch
       agent.infoMessage(`[${name}] Creating new branch: ${branchName}...`);
-      await terminal.executeCommand("git", ["checkout", "-b", branchName], {}, agent);
+      await terminal.executeCommand(
+        "git",
+        ["checkout", "-b", branchName],
+        {},
+        agent,
+      );
       agent.infoMessage(
         `[${name}] Successfully created and switched to branch: ${branchName}`,
       );
@@ -64,29 +74,58 @@ export async function execute(
       }
       // Delete a branch
       agent.infoMessage(`[${name}] Deleting branch: ${branchName}...`);
-      await terminal.executeCommand("git", ["branch", "-d", branchName], {}, agent);
+      await terminal.executeCommand(
+        "git",
+        ["branch", "-d", branchName],
+        {},
+        agent,
+      );
       agent.infoMessage(`[${name}] Successfully deleted branch: ${branchName}`);
       return `Branch '${branchName}' deleted`;
 
     case "current": {
       // Show current branch
-      const result = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
-      const currentBranch = result.status === "success" || result.status === "badExitCode" ? result.output : "";
+      const result = await terminal.executeCommand(
+        "git",
+        ["branch", "--show-current"],
+        {},
+        agent,
+      );
+      const currentBranch =
+        result.status === "success" || result.status === "badExitCode"
+          ? result.output
+          : "";
       const current = currentBranch.trim();
       agent.infoMessage(`[${name}] Current branch: ${current}`);
       return `Current branch: ${current}`;
     }
     default: {
       // Default: show current branch and list local branches
-      const currentResult = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
-      const currentBranchDefault = currentResult.status === "success" || currentResult.status === "badExitCode" ? currentResult.output : "";
-      const branchesResult = await terminal.executeCommand("git", ["branch"], {}, agent);
-      const branches = branchesResult.status === "success" || branchesResult.status === "badExitCode" ? branchesResult.output : "";
+      const currentResult = await terminal.executeCommand(
+        "git",
+        ["branch", "--show-current"],
+        {},
+        agent,
+      );
+      const currentBranchDefault =
+        currentResult.status === "success" ||
+        currentResult.status === "badExitCode"
+          ? currentResult.output
+          : "";
+      const branchesResult = await terminal.executeCommand(
+        "git",
+        ["branch"],
+        {},
+        agent,
+      );
+      const branches =
+        branchesResult.status === "success" ||
+        branchesResult.status === "badExitCode"
+          ? branchesResult.output
+          : "";
 
       const lines: string[] = [];
-      lines.push(
-        `[${name}] Current branch: ${currentBranchDefault.trim()}`,
-      );
+      lines.push(`[${name}] Current branch: ${currentBranchDefault.trim()}`);
       lines.push(`[${name}] Local branches:`);
       branches.split("\n").forEach((line: string) => {
         if (line.trim()) {
@@ -99,7 +138,8 @@ export async function execute(
   }
 }
 
-const description = "Manages git branches - list, create, switch, or delete branches.";
+const description =
+  "Manages git branches - list, create, switch, or delete branches.";
 const inputSchema = z.object({
   action: z
     .enum(["list", "create", "switch", "delete", "current"])
@@ -113,5 +153,9 @@ const inputSchema = z.object({
 });
 
 export default {
-  name, displayName, description, inputSchema, execute,
+  name,
+  displayName,
+  description,
+  inputSchema,
+  execute,
 } satisfies TokenRingToolDefinition<typeof inputSchema>;

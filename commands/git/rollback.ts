@@ -1,4 +1,4 @@
-import {AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand} from "@tokenring-ai/agent/types";
+import type {AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand,} from "@tokenring-ai/agent/types";
 import {execute as rollback} from "../../tools/rollback.ts";
 
 const inputSchema = {
@@ -9,12 +9,15 @@ const inputSchema = {
       defaultValue: 1,
       required: false,
       description: "Number of commits to roll back",
-    }
-  }
+    },
+  },
 } as const satisfies AgentCommandInputSchema;
 
-async function execute({args, agent}: AgentCommandInputType<typeof inputSchema>): Promise<string> {
-  let steps = args["--steps"];
+async function execute({
+                         args,
+                         agent,
+                       }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
+  const steps = args["--steps"];
   await rollback({steps}, agent);
   return `Rolled back ${steps} commit(s).`;
 }
