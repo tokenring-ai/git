@@ -1,7 +1,7 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import {ChatModelRegistry} from "@tokenring-ai/ai-client/ModelRegistry";
 import {ChatService} from "@tokenring-ai/chat";
-import type {TokenRingToolDefinition} from "@tokenring-ai/chat/schema";
+import type {TokenRingToolDefinition, } from "@tokenring-ai/chat/schema";
 import {FileSystemService} from "@tokenring-ai/filesystem";
 import {TerminalService} from "@tokenring-ai/terminal";
 import {z} from "zod";

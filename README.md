@@ -36,6 +36,7 @@ console.log(gitService.description); // "Provides Git functionality"
 ```
 
 **Properties:**
+
 - `name: string = "GitService"`: Service identifier
 - `description: string = "Provides Git functionality"`: Service description
 
@@ -58,6 +59,7 @@ const description = "Commits changes in the source directory to git.";
 ```
 
 **Input Schema:**
+
 ```typescript
 const inputSchema = z.object({
   message: z
@@ -70,14 +72,16 @@ const inputSchema = z.object({
 ```
 
 **Functionality:**
+
 - Commits all changes to git (stages all changes with `git add .`)
 - Uses AI to generate commit messages if none provided
 - Uses last two chat messages (system/user) for context when generating messages
-- Sets git user identity as "TokenRing Coder" with email "coder@tokenring.ai"
+- Sets git user identity as "TokenRing Coder" with email "<coder@tokenring.ai>"
 - Returns success message "Changes successfully committed to git"
 - Calls `fileSystem.setDirty(false, agent)` after commit
 
 **Implementation Details:**
+
 ```typescript
 export async function execute(
   args: z.output<typeof inputSchema>,
@@ -164,6 +168,7 @@ const description = "Rolls back to a previous git commit.";
 ```
 
 **Input Schema:**
+
 ```typescript
 const inputSchema = z.object({
   commit: z.string().describe("The commit hash to rollback to").optional(),
@@ -172,6 +177,7 @@ const inputSchema = z.object({
 ```
 
 **Functionality:**
+
 - Validates no uncommitted changes exist via `git status --porcelain`
 - Aborts rollback if uncommitted changes detected
 - Supports rollback to specific commit hash
@@ -180,6 +186,7 @@ const inputSchema = z.object({
 - Throws descriptive error on failure
 
 **Implementation Details:**
+
 ```typescript
 export async function execute(
   args: z.output<typeof inputSchema>,
@@ -232,17 +239,18 @@ export async function execute(
 
 **Note:** The `git_branch` tool exists in `tools/branch.ts` but is NOT exported from `tools.ts`. It must be imported directly if needed.
 
-Manages git branches - list, create, switch, delete, or show current branch.
+Manages git branches - list, create, switch, or delete branches.
 
 ```typescript
 import branchTool from "@tokenring-ai/git/tools/branch";
 
 const name = "git_branch";
 const displayName = "Git/branch";
-const description = "Manages git branches - list, create, switch, delete, or show current branch.";
+const description = "Manages git branches - list, create, switch, or delete branches.";
 ```
 
 **Input Schema:**
+
 ```typescript
 const inputSchema = z.object({
   action: z
@@ -258,6 +266,7 @@ const inputSchema = z.object({
 ```
 
 **Functionality:**
+
 - **list**: Lists all branches (local and remote) using `git branch -a`
 - **create**: Creates and switches to a new branch using `git checkout -b`
 - **switch**: Switches to an existing branch using `git checkout`
@@ -266,6 +275,7 @@ const inputSchema = z.object({
 - Default (no action): Shows current branch and lists local branches
 
 **Implementation Details:**
+
 ```typescript
 export async function execute(
   args: z.output<typeof inputSchema>,
@@ -364,6 +374,7 @@ const description = "Commit changes in the source directory";
 **Usage:** `git commit [message]`
 
 **Input Schema:**
+
 ```typescript
 const inputSchema = {
   args: {},
@@ -372,12 +383,14 @@ const inputSchema = {
 ```
 
 **Functionality:**
+
 - Commits all changes in the source directory to git
 - If no message is provided, an AI-generated commit message will be used
 - Stages all changes before committing (git add .)
 - Uses "TokenRing Coder" as the committer identity
 
 **Example:**
+
 ```
 /git commit
 /git commit Fix authentication bug
@@ -397,6 +410,7 @@ const description = "Roll back to a previous commit state";
 **Usage:** `git rollback [--steps <number>]`
 
 **Input Schema:**
+
 ```typescript
 const inputSchema = {
   args: {
@@ -412,11 +426,13 @@ const inputSchema = {
 ```
 
 **Functionality:**
+
 - Rolls back to a previous commit state
 - `--steps` - Number of commits to roll back (default: 1)
 - Validation: Aborts if there are uncommitted changes
 
 **Example:**
+
 ```
 /git rollback
 /git rollback --steps 3
@@ -436,9 +452,11 @@ const description = "List all branches (local and remote)";
 **Usage:** `git branch list`
 
 **Functionality:**
+
 - Lists all branches (local and remote) using `git branch -a`
 
 **Example:**
+
 ```
 /git branch list
 ```
@@ -457,6 +475,7 @@ const description = "Create and switch to a new branch";
 **Usage:** `git branch create <branchName>`
 
 **Input Schema:**
+
 ```typescript
 const inputSchema = {
   args: {},
@@ -469,9 +488,11 @@ const inputSchema = {
 ```
 
 **Functionality:**
+
 - Creates a new branch and switches to it using `git checkout -b`
 
 **Example:**
+
 ```
 /git branch create feature-xyz
 ```
@@ -490,6 +511,7 @@ const description = "Switch to an existing branch";
 **Usage:** `git branch switch <branchName>`
 
 **Input Schema:**
+
 ```typescript
 const inputSchema = {
   args: {},
@@ -502,9 +524,11 @@ const inputSchema = {
 ```
 
 **Functionality:**
+
 - Switches to an existing branch using `git checkout`
 
 **Example:**
+
 ```
 /git branch switch main
 ```
@@ -523,6 +547,7 @@ const description = "Delete a branch";
 **Usage:** `git branch delete <branchName>`
 
 **Input Schema:**
+
 ```typescript
 const inputSchema = {
   args: {},
@@ -535,9 +560,11 @@ const inputSchema = {
 ```
 
 **Functionality:**
+
 - Deletes a branch using `git branch -d`
 
 **Example:**
+
 ```
 /git branch delete feature-xyz
 ```
@@ -556,9 +583,11 @@ const description = "Show current branch";
 **Usage:** `git branch current`
 
 **Functionality:**
+
 - Shows the currently active git branch using `git branch --show-current`
 
 **Example:**
+
 ```
 /git branch current
 ```
@@ -588,6 +617,7 @@ const autoCommitConfig = {
 ```
 
 **Functionality:**
+
 - Triggered after testing completes (via `AfterTestsPassed` hook)
 - Only commits if all tests pass (via `TestingService.allTestsPassed()`)
 - Only commits if there are uncommitted changes (dirty state via `FileSystemService.isDirty()`)
@@ -595,6 +625,7 @@ const autoCommitConfig = {
 - Calls `filesystem.setDirty(false, agent)` after commit
 
 **Implementation Details:**
+
 ```typescript
 import { HookCallback } from "@tokenring-ai/lifecycle/util/hooks";
 import { AfterTestsPassed } from "@tokenring-ai/testing/hooks";
@@ -618,6 +649,7 @@ const callbacks = [
 ```
 
 **Required Services:**
+
 - `TestingService`: Check if all tests passed
 - `FileSystemService`: Check dirty state
 
@@ -636,6 +668,7 @@ console.log(gitService.description); // "Provides Git functionality"
 ```
 
 **Properties:**
+
 - `name: string = "GitService"`: Service identifier
 - `description: string = "Provides Git functionality"`: Service description
 
@@ -723,6 +756,7 @@ await agent.executeTool('git_branch', { action: "delete", branchName: "feature-x
 ```
 
 **Direct tool import (since not exported from tools.ts):**
+
 ```typescript
 import branchTool from "@tokenring-ai/git/tools/branch";
 
@@ -736,6 +770,7 @@ await agent.executeTool('git_branch', { action: "list" });
 The plugin automatically registers GitService, tools, and hooks with the TokenRing app.
 
 **Plugin Structure:**
+
 ```typescript
 import {AgentCommandService} from "@tokenring-ai/agent";
 import {TokenRingPlugin} from "@tokenring-ai/app";
@@ -752,6 +787,7 @@ const packageConfigSchema = z.object({});
 
 export default {
   name: packageJSON.name,
+  displayName: "Git Integration",
   version: packageJSON.version,
   description: packageJSON.description,
   install(app, config) {
@@ -817,6 +853,7 @@ This package does not define any RPC endpoints. Git operations are performed via
 This package does not define any state slices. It relies on the FileSystemService for dirty state tracking.
 
 **State Integration:**
+
 - `filesystem.isDirty(agent)`: Checks if there are uncommitted changes
 - `filesystem.setDirty(false, agent)`: Marks repository as clean after commit
 
@@ -837,6 +874,7 @@ This package does not define any state slices. It relies on the FileSystemServic
 ### Error Message Format
 
 All git tools prefix errors with tool name:
+
 ```
 [git_commit] AI did not provide a commit message, using default.
 [git_commit] Most recent chat message does not have a response id, unable to generate a git commit message, using default.
@@ -850,6 +888,7 @@ All git tools prefix errors with tool name:
 ### Default Git User
 
 All git commits use the following identity:
+
 - **Name**: `TokenRing Coder`
 - **Email**: `coder@tokenring.ai`
 
@@ -942,6 +981,7 @@ pkg/git/
 ### Key Implementation Patterns
 
 **AI Message Generation:**
+
 ```typescript
 // git_commit generates commit messages from chat context
 const messages = await chatService.buildChatMessages(
@@ -963,6 +1003,7 @@ gitCommitMessage = output || "TokenRing Coder Automatic Checkin";
 ```
 
 **Branch Tool Dispatch:**
+
 ```typescript
 // git_branch uses switch statement for action routing
 switch (action) {
@@ -980,6 +1021,7 @@ switch (action) {
 ```
 
 **State Management:**
+
 ```typescript
 // Check dirty state before auto commit
 if (filesystem.isDirty(agent)) {
@@ -995,6 +1037,7 @@ fileSystem.setDirty(false, agent);
 ```
 
 **Error Prefix Pattern:**
+
 ```typescript
 // All errors prefixed with tool name for consistency
 throw new Error(`[${name}] Rollback failed: ${error.message}`);
