@@ -46,7 +46,7 @@ export async function execute(
         messages.splice(0, messages.length - 2);
       }
 
-      const client = await chatModelRegistry.getClient(model);
+      const client = chatModelRegistry.getClient(model);
       const [output] = await client.textChat(
         {
           messages,
