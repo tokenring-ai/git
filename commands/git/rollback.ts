@@ -3,7 +3,7 @@ import {execute as rollback} from "../../tools/rollback.ts";
 
 const inputSchema = {
   args: {
-    "--steps": {
+    "steps": {
       type: "number",
       minimum: 1,
       defaultValue: 1,
@@ -17,7 +17,7 @@ async function execute({
                          args,
                          agent,
                        }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
-  const steps = args["--steps"];
+  const steps = args.steps;
   await rollback({steps}, agent);
   return `Rolled back ${steps} commit(s).`;
 }
