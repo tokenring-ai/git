@@ -1,14 +1,13 @@
 import FileSystemService from "@tokenring-ai/filesystem/FileSystemService";
-import type {HookSubscription} from "@tokenring-ai/lifecycle/types";
-import {HookCallback} from "@tokenring-ai/lifecycle/util/hooks";
-import {AfterTestsPassed} from "@tokenring-ai/testing/hooks";
+import type { HookSubscription } from "@tokenring-ai/lifecycle/types";
+import { HookCallback } from "@tokenring-ai/lifecycle/util/hooks";
+import { AfterTestsPassed } from "@tokenring-ai/testing/hooks";
 import TestingService from "@tokenring-ai/testing/TestingService";
-import {execute as commit} from "../tools/commit.ts";
+import { execute as commit } from "../tools/commit.ts";
 
 const name = "autoCommit";
 const displayName = "Git/Auto Commit";
-const description =
-  "Automatically commit changes to the source directory to git";
+const description = "Automatically commit changes to the source directory to git";
 
 const callbacks = [
   new HookCallback(AfterTestsPassed, async (_data, agent) => {
@@ -19,7 +18,7 @@ const callbacks = [
         agent.errorMessage("Not committing changes, due to tests not passing");
         return;
       }
-      await commit({message: ""}, agent);
+      await commit({ message: "" }, agent);
     }
   }),
 ];

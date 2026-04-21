@@ -1,19 +1,16 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import {ChatModelRegistry} from "@tokenring-ai/ai-client/ModelRegistry";
-import {ChatService} from "@tokenring-ai/chat";
-import type {TokenRingToolDefinition, } from "@tokenring-ai/chat/schema";
-import {FileSystemService} from "@tokenring-ai/filesystem";
-import {TerminalService} from "@tokenring-ai/terminal";
-import {z} from "zod";
+import { ChatModelRegistry } from "@tokenring-ai/ai-client/ModelRegistry";
+import { ChatService } from "@tokenring-ai/chat";
+import type { TokenRingToolDefinition } from "@tokenring-ai/chat/schema";
+import { FileSystemService } from "@tokenring-ai/filesystem";
+import { TerminalService } from "@tokenring-ai/terminal";
+import { z } from "zod";
 
 // Exported tool name used for chat messages and identification
 const name = "git_commit";
 const displayName = "Git/commit";
 
-export async function execute(
-  args: z.output<typeof inputSchema>,
-  agent: Agent,
-): Promise<string> {
+export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<string> {
   const fileSystem = agent.requireServiceByType(FileSystemService);
   const terminal = agent.requireServiceByType(TerminalService);
   const chatModelRegistry = agent.requireServiceByType(ChatModelRegistry);
@@ -25,9 +22,7 @@ export async function execute(
 
   if (!gitCommitMessage) {
     // If no message provided, generate one
-    agent.infoMessage(
-      `[${name}] Asking OpenAI to generate a git commit message...`,
-    );
+    agent.infoMessage(`[${name}] Asking OpenAI to generate a git commit message...`);
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
     if (currentMessage) {
       const model = chatService.requireModel(agent);
@@ -58,34 +53,17 @@ export async function execute(
         // Ensure AI provides a non-empty message
         gitCommitMessage = output;
       } else {
-        agent.warningMessage(
-          `[${name}] AI did not provide a commit message, using default.`,
-        );
+        agent.warningMessage(`[${name}] AI did not provide a commit message, using default.`);
       }
     } else {
-      agent.errorMessage(
-        `[${name}] Most recent chat message does not have a response id, unable to generate a git commit message, using default.`,
-      );
+      agent.errorMessage(`[${name}] Most recent chat message does not have a response id, unable to generate a git commit message, using default.`);
     }
   } else {
     agent.infoMessage(`[${name}] Using provided commit message.`);
   }
 
   await terminal.executeCommand("git", ["add", "."], {}, agent);
-  await terminal.executeCommand(
-    "git",
-    [
-      "-c",
-      "user.name=TokenRing Coder",
-      "-c",
-      "user.email=coder@tokenring.ai",
-      "commit",
-      "-m",
-      gitCommitMessage,
-    ],
-    {},
-    agent,
-  );
+  await terminal.executeCommand("git", ["-c", "user.name=TokenRing Coder", "-c", "user.email=coder@tokenring.ai", "commit", "-m", gitCommitMessage], {}, agent);
   agent.infoMessage(`[${name}] Changes committed to git.`);
 
   fileSystem.setDirty(false, agent);
@@ -95,12 +73,7 @@ export async function execute(
 
 const description = "Commits changes in the source directory to git.";
 const inputSchema = z.object({
-  message: z
-    .string()
-    .describe(
-      "Optional commit message. If not provided, a message will be generated based on the chat context.",
-    )
-    .optional(),
+  message: z.string().describe("Optional commit message. If not provided, a message will be generated based on the chat context.").exactOptional(),
 });
 
 export default {

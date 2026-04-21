@@ -1,12 +1,10 @@
-import type {AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand} from "@tokenring-ai/agent/types";
-import {execute as branch} from "../../../tools/branch.ts";
+import type { AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand } from "@tokenring-ai/agent/types";
+import { execute as branch } from "../../../tools/branch.ts";
 
 const inputSchema = {} as const satisfies AgentCommandInputSchema;
 
-async function execute({
-                         agent,
-                       }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
-  await branch({action: "list"}, agent);
+async function execute({ agent }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
+  await branch({ action: "list" }, agent);
   return "Branch list displayed.";
 }
 

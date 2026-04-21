@@ -1,5 +1,5 @@
-import type {AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand} from "@tokenring-ai/agent/types";
-import {execute as branch} from "../../../tools/branch.ts";
+import type { AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand } from "@tokenring-ai/agent/types";
+import { execute as branch } from "../../../tools/branch.ts";
 
 const inputSchema = {
   args: {},
@@ -12,13 +12,10 @@ const inputSchema = {
   ],
 } as const satisfies AgentCommandInputSchema;
 
-async function execute({
-                         positionals,
-                         agent,
-                       }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
+async function execute({ positionals, agent }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
   const branchName = positionals.branchName;
 
-  await branch({action: "create", branchName}, agent);
+  await branch({ action: "create", branchName }, agent);
   return `Created and switched to branch "${branchName}".`;
 }
 

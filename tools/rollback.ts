@@ -1,30 +1,19 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type {TokenRingToolDefinition, } from "@tokenring-ai/chat/schema";
-import {TerminalService} from "@tokenring-ai/terminal";
-import {z} from "zod";
+import type { TokenRingToolDefinition } from "@tokenring-ai/chat/schema";
+import { TerminalService } from "@tokenring-ai/terminal";
+import { z } from "zod";
 
 const name = "git_rollback";
 const displayName = "Git/rollback";
 
-export async function execute(
-  args: z.output<typeof inputSchema>,
-  agent: Agent,
-): Promise<string> {
+export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<string> {
   const terminal = agent.requireServiceByType(TerminalService);
 
   const toolName = "rollback";
 
   // Ensure there are no uncommitted changes
-  const result = await terminal.executeCommand(
-    "git",
-    ["status", "--porcelain"],
-    {},
-    agent,
-  );
-  const output =
-    result.status === "success" || result.status === "badExitCode"
-      ? result.output
-      : "";
+  const result = await terminal.executeCommand("git", ["status", "--porcelain"], {}, agent);
+  const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
   if (output.trim() !== "") {
     throw new Error(`[${name}] Rollback aborted: uncommitted changes detected`);
   }
@@ -33,30 +22,15 @@ export async function execute(
   if (args.commit) {
     // Rollback to specific commit
     agent.infoMessage(`[${toolName}] Rolling back to commit ${args.commit}...`);
-    await terminal.executeCommand(
-      "git",
-      ["reset", "--hard", args.commit],
-      {},
-      agent,
-    );
+    await terminal.executeCommand("git", ["reset", "--hard", args.commit], {}, agent);
   } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
     // Rollback by a number of steps
     agent.infoMessage(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
-    await terminal.executeCommand(
-      "git",
-      ["reset", "--hard", `HEAD~${args.steps}`],
-      {},
-      agent,
-    );
+    await terminal.executeCommand("git", ["reset", "--hard", `HEAD~${args.steps}`], {}, agent);
   } else {
     // Default: rollback one commit
     agent.infoMessage(`[${toolName}] Rolling back to previous commit...`);
-    await terminal.executeCommand(
-      "git",
-      ["reset", "--hard", "HEAD~1"],
-      {},
-      agent,
-    );
+    await terminal.executeCommand("git", ["reset", "--hard", "HEAD~1"], {}, agent);
   }
 
   agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
@@ -66,8 +40,8 @@ export async function execute(
 const description = "Rolls back to a previous git commit.";
 
 const inputSchema = z.object({
-  commit: z.string().describe("The commit hash to rollback to").optional(),
-  steps: z.number().int().describe("Number of commits to roll back").optional(),
+  commit: z.string().describe("The commit hash to rollback to").exactOptional(),
+  steps: z.number().int().describe("Number of commits to roll back").exactOptional(),
 });
 
 export default {

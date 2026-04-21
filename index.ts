@@ -1,1 +1,1 @@
-export {default as GitService} from "./GitService.ts";
+export { default as GitService } from "./GitService.ts";
