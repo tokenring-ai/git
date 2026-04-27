@@ -5,9 +5,9 @@ import { AgentLifecycleService } from "@tokenring-ai/lifecycle";
 import { z } from "zod";
 import agentCommands from "./commands.ts";
 import GitService from "./GitService.ts";
-import hooks from "./hooks.ts";
 import packageJSON from "./package.json" with { type: "json" };
 import tools from "./tools.ts";
+import autoCommit from "./hooks/autoCommit.ts";
 
 const packageConfigSchema = z.object({});
 
@@ -20,7 +20,7 @@ export default {
     app.waitForService(ChatService, chatService => chatService.addTools(...tools));
     app.waitForService(AgentCommandService, agentCommandService => agentCommandService.addAgentCommands(agentCommands));
     app.addServices(new GitService());
-    app.waitForService(AgentLifecycleService, lifecycleService => lifecycleService.addHooks(hooks));
+    app.waitForService(AgentLifecycleService, lifecycleService => lifecycleService.addHooks(autoCommit));
   },
   config: packageConfigSchema,
 } satisfies TokenRingPlugin<typeof packageConfigSchema>;

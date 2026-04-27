@@ -2,7 +2,7 @@
 
 ## Overview
 
-Git integration package for TokenRing AI agents, providing Git operations within the agent framework. This package enables Git operations including commits, rollbacks, and branch management with AI-generated commit messages. It works seamlessly with the TokenRing ecosystem, providing both programmatic tools and interactive commands for Git operations.
+Git integration package for TokenRing AI agents, providing version control tools for commits, branch management, and automated rollbacks. This package enables Git operations including commits, rollbacks, and branch management with AI-generated commit messages. It works seamlessly with the TokenRing ecosystem, providing both programmatic tools and interactive commands for Git operations.
 
 ## Key Features
 
@@ -67,7 +67,7 @@ const inputSchema = z.object({
     .describe(
       "Optional commit message. If not provided, a message will be generated based on the chat context.",
     )
-    .optional(),
+    .exactOptional(),
 });
 ```
 
@@ -76,7 +76,7 @@ const inputSchema = z.object({
 - Commits all changes to git (stages all changes with `git add .`)
 - Uses AI to generate commit messages if none provided
 - Uses last two chat messages (system/user) for context when generating messages
-- Sets git user identity as "TokenRing Coder" with email "<coder@tokenring.ai>"
+- Sets git user identity as "TokenRing Coder" with email `coder@tokenring.ai`
 - Returns success message "Changes successfully committed to git"
 - Calls `fileSystem.setDirty(false, agent)` after commit
 
@@ -100,11 +100,11 @@ export async function execute(
     // If no message provided, generate one
     agent.infoMessage(`[${name}] Asking OpenAI to generate a git commit message...`);
     gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
-    
+
     if (currentMessage) {
       const model = chatService.requireModel(agent);
       const chatConfig = chatService.getChatConfig(agent);
-      
+
       const messages = await chatService.buildChatMessages({
         input: "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
         chatConfig,
@@ -116,12 +116,12 @@ export async function execute(
         messages.splice(0, messages.length - 2);
       }
 
-      const client = await chatModelRegistry.getClient(model);
+      const client = chatModelRegistry.getClient(model);
       const [output] = await client.textChat({
         messages,
         tools: {}
       }, agent);
-      
+
       if (output && output.trim() !== "") {
         gitCommitMessage = output;
       } else {
@@ -148,7 +148,7 @@ export async function execute(
     "-m",
     gitCommitMessage,
   ], {}, agent);
-  
+
   agent.infoMessage(`[${name}] Changes committed to git.`);
   fileSystem.setDirty(false, agent);
   return "Changes successfully committed to git";
@@ -171,8 +171,8 @@ const description = "Rolls back to a previous git commit.";
 
 ```typescript
 const inputSchema = z.object({
-  commit: z.string().describe("The commit hash to rollback to").optional(),
-  steps: z.number().int().describe("Number of commits to roll back").optional(),
+  commit: z.string().describe("The commit hash to rollback to").exactOptional(),
+  steps: z.number().int().describe("Number of commits to roll back").exactOptional(),
 });
 ```
 
@@ -202,36 +202,32 @@ export async function execute(
     "--porcelain",
   ], {}, agent);
   const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
-  
+
   if (output.trim() !== "") {
     throw new Error(`[${name}] Rollback aborted: uncommitted changes detected`);
   }
 
-  try {
-    // Determine which commit to roll back to
-    if (args.commit) {
-      // Rollback to specific commit
-      agent.infoMessage(`[${toolName}] Rolling back to commit ${args.commit}...`);
-      await terminal.executeCommand("git", ["reset", "--hard", args.commit], {}, agent);
-    } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
-      // Rollback by a number of steps
-      agent.infoMessage(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
-      await terminal.executeCommand("git", [
-        "reset",
-        "--hard",
-        `HEAD~${args.steps}`,
-      ], {}, agent);
-    } else {
-      // Default: rollback one commit
-      agent.infoMessage(`[${toolName}] Rolling back to previous commit...`);
-      await terminal.executeCommand("git", ["reset", "--hard", "HEAD~1"], {}, agent);
-    }
-
-    agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
-    return "Successfully rolled back to previous state";
-  } catch (error: any) {
-    throw new Error(`[${name}] Rollback failed: ${error.shortMessage || error.message}`);
+  // Determine which commit to roll back to
+  if (args.commit) {
+    // Rollback to specific commit
+    agent.infoMessage(`[${toolName}] Rolling back to commit ${args.commit}...`);
+    await terminal.executeCommand("git", ["reset", "--hard", args.commit], {}, agent);
+  } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
+    // Rollback by a number of steps
+    agent.infoMessage(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
+    await terminal.executeCommand("git", [
+      "reset",
+      "--hard",
+      `HEAD~${args.steps}`,
+    ], {}, agent);
+  } else {
+    // Default: rollback one commit
+    agent.infoMessage(`[${toolName}] Rolling back to previous commit...`);
+    await terminal.executeCommand("git", ["reset", "--hard", "HEAD~1"], {}, agent);
   }
+
+  agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
+  return "Successfully rolled back to previous state";
 }
 ```
 
@@ -261,7 +257,7 @@ const inputSchema = z.object({
     .describe(
       "The name of the branch (required for create, switch, and delete actions)",
     )
-    .optional(),
+    .exactOptional(),
 });
 ```
 
@@ -391,7 +387,7 @@ const inputSchema = {
 
 **Example:**
 
-```
+```bash
 /git commit
 /git commit Fix authentication bug
 ```
@@ -414,7 +410,7 @@ const description = "Roll back to a previous commit state";
 ```typescript
 const inputSchema = {
   args: {
-    "--steps": {
+    steps: {
       type: "number",
       minimum: 1,
       defaultValue: 1,
@@ -433,7 +429,7 @@ const inputSchema = {
 
 **Example:**
 
-```
+```bash
 /git rollback
 /git rollback --steps 3
 ```
@@ -457,7 +453,7 @@ const description = "List all branches (local and remote)";
 
 **Example:**
 
-```
+```bash
 /git branch list
 ```
 
@@ -493,7 +489,7 @@ const inputSchema = {
 
 **Example:**
 
-```
+```bash
 /git branch create feature-xyz
 ```
 
@@ -529,7 +525,7 @@ const inputSchema = {
 
 **Example:**
 
-```
+```bash
 /git branch switch main
 ```
 
@@ -565,7 +561,7 @@ const inputSchema = {
 
 **Example:**
 
-```
+```bash
 /git branch delete feature-xyz
 ```
 
@@ -588,7 +584,7 @@ const description = "Show current branch";
 
 **Example:**
 
-```
+```bash
 /git branch current
 ```
 
@@ -634,7 +630,7 @@ const callbacks = [
   new HookCallback(AfterTestsPassed, async (_data, agent) => {
     const testingService = agent.requireServiceByType(TestingService);
     const filesystem = agent.requireServiceByType(FileSystemService);
-    
+
     if (filesystem.isDirty(agent)) {
       if (!testingService.allTestsPassed(agent)) {
         agent.errorMessage(
@@ -655,7 +651,7 @@ const callbacks = [
 
 ## Services
 
-### GitService
+### GitService (Reference)
 
 The main service class that provides basic Git service metadata.
 
@@ -677,8 +673,8 @@ console.log(gitService.description); // "Provides Git functionality"
 The plugin has an empty configuration schema since it does not require any configuration options.
 
 ```typescript
-import {TokenRingPlugin} from "@tokenring-ai/app";
-import {z} from "zod";
+import { TokenRingPlugin } from "@tokenring-ai/app";
+import { z } from "zod";
 import plugin from "@tokenring-ai/git/plugin";
 
 const packageConfigSchema = z.object({});
@@ -727,7 +723,7 @@ await agent.executeTool('git_rollback', { commit: "abc123def" });
 // git rollback --steps 3
 ```
 
-### Branch Management
+### Branch Management (Examples)
 
 **Note:** The `git_branch` tool is NOT exported from `tools.ts`. Import it directly from `tools/branch.ts` if needed.
 
@@ -772,15 +768,15 @@ The plugin automatically registers GitService, tools, and hooks with the TokenRi
 **Plugin Structure:**
 
 ```typescript
-import {AgentCommandService} from "@tokenring-ai/agent";
-import {TokenRingPlugin} from "@tokenring-ai/app";
-import {ChatService} from "@tokenring-ai/chat";
-import {AgentLifecycleService} from "@tokenring-ai/lifecycle";
-import {z} from "zod";
+import { AgentCommandService } from "@tokenring-ai/agent";
+import { TokenRingPlugin } from "@tokenring-ai/app";
+import { ChatService } from "@tokenring-ai/chat";
+import { AgentLifecycleService } from "@tokenring-ai/lifecycle";
+import { z } from "zod";
 import agentCommands from "./commands";
-import GitService from "./GitService.js";
+import GitService from "./GitService";
 import hooks from "./hooks";
-import packageJSON from './package.json' with {type: 'json'};
+import packageJSON from './package.json' with { type: 'json' };
 import tools from "./tools";
 
 const packageConfigSchema = z.object({});
@@ -790,26 +786,13 @@ export default {
   displayName: "Git Integration",
   version: packageJSON.version,
   description: packageJSON.description,
-  install(app, config) {
-    // Register tools with ChatService
-    app.waitForService(ChatService, chatService =>
-      chatService.addTools(tools)
-    );
-    
-    // Register commands with AgentCommandService
-    app.waitForService(AgentCommandService, agentCommandService =>
-      agentCommandService.addAgentCommands(agentCommands)
-    );
-    
-    // Register GitService
+  install(app, _config) {
+    app.waitForService(ChatService, chatService => chatService.addTools(...tools));
+    app.waitForService(AgentCommandService, agentCommandService => agentCommandService.addAgentCommands(agentCommands));
     app.addServices(new GitService());
-    
-    // Register hooks with AgentLifecycleService
-    app.waitForService(AgentLifecycleService, lifecycleService =>
-      lifecycleService.addHooks(hooks)
-    );
+    app.waitForService(AgentLifecycleService, lifecycleService => lifecycleService.addHooks(hooks));
   },
-  config: packageConfigSchema
+  config: packageConfigSchema,
 } satisfies TokenRingPlugin<typeof packageConfigSchema>;
 ```
 
@@ -875,7 +858,7 @@ This package does not define any state slices. It relies on the FileSystemServic
 
 All git tools prefix errors with tool name:
 
-```
+```text
 [git_commit] AI did not provide a commit message, using default.
 [git_commit] Most recent chat message does not have a response id, unable to generate a git commit message, using default.
 [git_rollback] Rollback aborted: uncommitted changes detected
@@ -949,7 +932,7 @@ bun run build
 
 ### Package Structure
 
-```
+```text
 pkg/git/
 ├── GitService.ts           # Main service class (TokenRingService implementation)
 ├── index.ts                # Main export (GitService)
@@ -1016,7 +999,7 @@ switch (action) {
     break;
   // ... other cases
   default:
-    // Default: show current branch and list local branches
+  // Default: show current branch and list local branches
 }
 ```
 
@@ -1057,26 +1040,24 @@ agent.infoMessage(`[${name}] Changes committed to git`);
 
 ### Production Dependencies
 
-| Package | Version |
-|---------|---------|
-| @tokenring-ai/ai-client | 0.2.0 |
-| @tokenring-ai/app | 0.2.0 |
-| @tokenring-ai/chat | 0.2.0 |
-| @tokenring-ai/agent | 0.2.0 |
-| @tokenring-ai/filesystem | 0.2.0 |
-| @tokenring-ai/lifecycle | 0.2.0 |
-| @tokenring-ai/testing | 0.2.0 |
-| @tokenring-ai/utility | 0.2.0 |
-| @tokenring-ai/terminal | 0.2.0 |
-| execa | ^9.6.1 |
-| zod | ^4.3.6 |
+| Package                  | Version |
+|--------------------------|---------|
+| @tokenring-ai/ai-client  | 0.2.0   |
+| @tokenring-ai/app        | 0.2.0   |
+| @tokenring-ai/chat       | 0.2.0   |
+| @tokenring-ai/agent      | 0.2.0   |
+| @tokenring-ai/filesystem | 0.2.0   |
+| @tokenring-ai/lifecycle  | 0.2.0   |
+| @tokenring-ai/testing    | 0.2.0   |
+| @tokenring-ai/terminal   | 0.2.0   |
+| zod                      | ^4.3.6  |
 
 ### Development Dependencies
 
-| Package | Version |
-|---------|---------|
-| vitest | ^4.1.1 |
-| typescript | ^6.0.2 |
+| Package    | Version |
+|------------|---------|
+| vitest     | ^4.1.1  |
+| typescript | ^6.0.2  |
 
 ## Related Components
 
