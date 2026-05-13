@@ -2,7 +2,10 @@
 
 ## Overview
 
-Git integration package for TokenRing AI agents, providing version control tools for commits, branch management, and automated rollbacks. This package enables Git operations including commits, rollbacks, and branch management with AI-generated commit messages. It works seamlessly with the TokenRing ecosystem, providing both programmatic tools and interactive commands for Git operations.
+Git integration package for TokenRing AI agents, providing version control tools for commits, branch management, and
+automated rollbacks. This package enables Git operations including commits, rollbacks, and branch management with
+AI-generated commit messages. It works seamlessly with the TokenRing ecosystem, providing both programmatic tools and
+interactive commands for Git operations.
 
 ## Key Features
 
@@ -233,7 +236,8 @@ export async function execute(
 
 #### git_branch (Not exported from tools.ts)
 
-**Note:** The `git_branch` tool exists in `tools/branch.ts` but is NOT exported from `tools.ts`. It must be imported directly if needed.
+**Note:** The `git_branch` tool exists in `tools/branch.ts` but is NOT exported from `tools.ts`. It must be imported
+directly if needed.
 
 Manages git branches - list, create, switch, or delete branches.
 
@@ -354,7 +358,8 @@ export async function execute(
 
 ## Commands
 
-Agent commands are exported from `commands.ts` and registered with AgentCommandService. Each command is a separate, individually registered command.
+Agent commands are exported from `commands.ts` and registered with AgentCommandService. Each command is a separate,
+individually registered command.
 
 ### git commit
 

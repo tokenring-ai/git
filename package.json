@@ -3,14 +3,14 @@
   "description": "Version control tools for commits, branch management, and automated rollbacks.",
   "version": "0.2.0",
   "dependencies": {
-    "@tokenring-ai/ai-client": "0.2.0",
-    "@tokenring-ai/app": "0.2.0",
-    "@tokenring-ai/chat": "0.2.0",
-    "@tokenring-ai/agent": "0.2.0",
-    "@tokenring-ai/filesystem": "0.2.0",
-    "@tokenring-ai/lifecycle": "0.2.0",
-    "@tokenring-ai/testing": "0.2.0",
-    "@tokenring-ai/terminal": "0.2.0",
+    "@tokenring-ai/ai-client": "workspace:*",
+    "@tokenring-ai/app": "workspace:*",
+    "@tokenring-ai/chat": "workspace:*",
+    "@tokenring-ai/agent": "workspace:*",
+    "@tokenring-ai/filesystem": "workspace:*",
+    "@tokenring-ai/lifecycle": "workspace:*",
+    "@tokenring-ai/testing": "workspace:*",
+    "@tokenring-ai/terminal": "workspace:*",
     "zod": "^4.3.6"
   },
   "exports": {
