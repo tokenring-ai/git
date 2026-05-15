@@ -23,7 +23,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
   if (!gitCommitMessage) {
     // If no message provided, generate one
     agent.infoMessage(`[${name}] Asking OpenAI to generate a git commit message...`);
-    gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
+    gitCommitMessage = "TokenRing Automatic Checkin"; // Default fallback
     if (currentMessage) {
       const model = chatService.requireModel(agent);
 
@@ -63,7 +63,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
   }
 
   await terminal.executeCommand("git", ["add", "."], {}, agent);
-  await terminal.executeCommand("git", ["-c", "user.name=TokenRing Coder", "-c", "user.email=coder@tokenring.ai", "commit", "-m", gitCommitMessage], {}, agent);
+  await terminal.executeCommand("git", ["-c", "user.name=TokenRing", "-c", "user.email=coder@tokenring.ai", "commit", "-m", gitCommitMessage], {}, agent);
   agent.infoMessage(`[${name}] Changes committed to git.`);
 
   fileSystem.setDirty(false, agent);

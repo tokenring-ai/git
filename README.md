@@ -2,12 +2,9 @@
 
 ## Overview
 
-Git integration package for TokenRing AI agents, providing version control tools for commits, branch management, and
-automated rollbacks. This package enables Git operations including commits, rollbacks, and branch management with
-AI-generated commit messages. It works seamlessly with the TokenRing ecosystem, providing both programmatic tools and
-interactive commands for Git operations.
+Git integration package for TokenRing AI agents, providing version control tools for commits, branch management, and automated rollbacks. This package enables Git operations including commits, rollbacks, and branch management with AI-generated commit messages. It works seamlessly with the TokenRing ecosystem, providing both programmatic tools and interactive commands for Git operations.
 
-## Key Features
+**Key Features:**
 
 - **AI-Powered Commit Messages**: Generate commit messages based on chat context
 - **Automated Commits**: Automatic commits after successful testing via hooks
@@ -24,7 +21,46 @@ interactive commands for Git operations.
 bun add @tokenring-ai/git
 ```
 
-## Core Components
+## Chat Commands
+
+| Command | Description | Usage |
+|---------|-------------|-------|
+| `git commit` | Commit changes in the source directory | `/git commit [message]` |
+| `git rollback` | Roll back to a previous commit state | `/git rollback [--steps <number>]` |
+| `git branch list` | List all branches (local and remote) | `/git branch list` |
+| `git branch create` | Create and switch to a new branch | `/git branch create <branchName>` |
+| `git branch switch` | Switch to an existing branch | `/git branch switch <branchName>` |
+| `git branch delete` | Delete a branch | `/git branch delete <branchName>` |
+| `git branch current` | Show current branch | `/git branch current` |
+
+## Tools
+
+| Tool | Display Name | Description |
+|------|--------------|-------------|
+| `git_commit` | Git/commit | Commits changes in the source directory to git |
+| `git_rollback` | Git/rollback | Rolls back to a previous git commit |
+
+**Note:** The `git_branch` tool exists in `tools/branch.ts` but is NOT exported from `tools.ts`. It must be imported directly if needed.
+
+### Additional Tool (Not Exported)
+
+| Tool | Display Name | Description |
+|------|--------------|-------------|
+| `git_branch` | Git/branch | Manages git branches - list, create, switch, or delete branches |
+
+## Configuration
+
+This package does not require any configuration options.
+
+### Environment Variables
+
+None.
+
+### Sampling Configuration
+
+Not applicable - this package does not define sampling configuration.
+
+## Services
 
 ### GitService
 
@@ -45,9 +81,11 @@ console.log(gitService.description); // "Provides Git functionality"
 
 **Note:** GitService provides only metadata and registration. Use tools or commands for actual Git operations.
 
-### Tools
+## Core Components
 
-Tools are exported from `tools.ts` and can be registered with the ChatService.
+### Tool Implementations
+
+Tool implementations are exported from `tools.ts` and can be registered with the ChatService.
 
 #### git_commit
 
@@ -79,7 +117,7 @@ const inputSchema = z.object({
 - Commits all changes to git (stages all changes with `git add .`)
 - Uses AI to generate commit messages if none provided
 - Uses last two chat messages (system/user) for context when generating messages
-- Sets git user identity as "TokenRing Coder" with email `coder@tokenring.ai`
+- Sets git user identity as "TokenRing" with email `coder@tokenring.ai`
 - Returns success message "Changes successfully committed to git"
 - Calls `fileSystem.setDirty(false, agent)` after commit
 
@@ -102,7 +140,7 @@ export async function execute(
   if (!gitCommitMessage) {
     // If no message provided, generate one
     agent.infoMessage(`[${name}] Asking OpenAI to generate a git commit message...`);
-    gitCommitMessage = "TokenRing Coder Automatic Checkin"; // Default fallback
+    gitCommitMessage = "TokenRing Automatic Checkin"; // Default fallback
 
     if (currentMessage) {
       const model = chatService.requireModel(agent);
@@ -144,7 +182,7 @@ export async function execute(
   await terminal.executeCommand("git", ["add", "."], {}, agent);
   await terminal.executeCommand("git", [
     "-c",
-    "user.name=TokenRing Coder",
+    "user.name=TokenRing",
     "-c",
     "user.email=coder@tokenring.ai",
     "commit",
@@ -234,10 +272,7 @@ export async function execute(
 }
 ```
 
-#### git_branch (Not exported from tools.ts)
-
-**Note:** The `git_branch` tool exists in `tools/branch.ts` but is NOT exported from `tools.ts`. It must be imported
-directly if needed.
+#### git_branch
 
 Manages git branches - list, create, switch, or delete branches.
 
@@ -358,8 +393,7 @@ export async function execute(
 
 ## Commands
 
-Agent commands are exported from `commands.ts` and registered with AgentCommandService. Each command is a separate,
-individually registered command.
+Agent commands are exported from `commands.ts` and registered with AgentCommandService. Each command is a separate, individually registered command.
 
 ### git commit
 
@@ -372,7 +406,7 @@ const name = "git commit";
 const description = "Commit changes in the source directory";
 ```
 
-**Usage:** `git commit [message]`
+**Usage:** `/git commit [message]`
 
 **Input Schema:**
 
@@ -388,7 +422,7 @@ const inputSchema = {
 - Commits all changes in the source directory to git
 - If no message is provided, an AI-generated commit message will be used
 - Stages all changes before committing (git add .)
-- Uses "TokenRing Coder" as the committer identity
+- Uses "TokenRing" as the committer identity
 
 **Example:**
 
@@ -408,7 +442,7 @@ const name = "git rollback";
 const description = "Roll back to a previous commit state";
 ```
 
-**Usage:** `git rollback [--steps <number>]`
+**Usage:** `/git rollback [--steps <number>]`
 
 **Input Schema:**
 
@@ -450,7 +484,7 @@ const name = "git branch list";
 const description = "List all branches (local and remote)";
 ```
 
-**Usage:** `git branch list`
+**Usage:** `/git branch list`
 
 **Functionality:**
 
@@ -473,7 +507,7 @@ const name = "git branch create";
 const description = "Create and switch to a new branch";
 ```
 
-**Usage:** `git branch create <branchName>`
+**Usage:** `/git branch create <branchName>`
 
 **Input Schema:**
 
@@ -509,7 +543,7 @@ const name = "git branch switch";
 const description = "Switch to an existing branch";
 ```
 
-**Usage:** `git branch switch <branchName>`
+**Usage:** `/git branch switch <branchName>`
 
 **Input Schema:**
 
@@ -545,7 +579,7 @@ const name = "git branch delete";
 const description = "Delete a branch";
 ```
 
-**Usage:** `git branch delete <branchName>`
+**Usage:** `/git branch delete <branchName>`
 
 **Input Schema:**
 
@@ -581,7 +615,7 @@ const name = "git branch current";
 const description = "Show current branch";
 ```
 
-**Usage:** `git branch current`
+**Usage:** `/git branch current`
 
 **Functionality:**
 
@@ -653,25 +687,6 @@ const callbacks = [
 
 - `TestingService`: Check if all tests passed
 - `FileSystemService`: Check dirty state
-
-## Services
-
-### GitService (Reference)
-
-The main service class that provides basic Git service metadata.
-
-```typescript
-import GitService from "@tokenring-ai/git/GitService";
-
-const gitService = new GitService();
-console.log(gitService.name); // "GitService"
-console.log(gitService.description); // "Provides Git functionality"
-```
-
-**Properties:**
-
-- `name: string = "GitService"`: Service identifier
-- `description: string = "Provides Git functionality"`: Service description
 
 ## Plugin Configuration
 
@@ -871,25 +886,14 @@ All git tools prefix errors with tool name:
 [git_branch] Branch name is required for create action
 ```
 
-## Configuration
-
-### Default Git User
+## Default Git User
 
 All git commits use the following identity:
 
-- **Name**: `TokenRing Coder`
+- **Name**: `TokenRing`
 - **Email**: `coder@tokenring.ai`
 
 This is set via command-line arguments to git and cannot be overridden via package configuration.
-
-### Configuration Schema
-
-```typescript
-const packageConfigSchema = z.object({});
-
-// No package-level configuration available
-// All behavior is controlled via tools and commands
-```
 
 ## Best Practices
 
@@ -987,7 +991,7 @@ if (messages.length > 2) {
 const [output] = await client.textChat({ messages, tools: {} }, agent);
 
 // Use AI-generated message or fallback
-gitCommitMessage = output || "TokenRing Coder Automatic Checkin";
+gitCommitMessage = output || "TokenRing Automatic Checkin";
 ```
 
 **Branch Tool Dispatch:**
@@ -1045,24 +1049,24 @@ agent.infoMessage(`[${name}] Changes committed to git`);
 
 ### Production Dependencies
 
-| Package                  | Version |
-|--------------------------|---------|
-| @tokenring-ai/ai-client  | 0.2.0   |
-| @tokenring-ai/app        | 0.2.0   |
-| @tokenring-ai/chat       | 0.2.0   |
-| @tokenring-ai/agent      | 0.2.0   |
-| @tokenring-ai/filesystem | 0.2.0   |
-| @tokenring-ai/lifecycle  | 0.2.0   |
-| @tokenring-ai/testing    | 0.2.0   |
-| @tokenring-ai/terminal   | 0.2.0   |
-| zod                      | ^4.3.6  |
+| Package | Version |
+|---------|---------|
+| @tokenring-ai/ai-client | workspace:* |
+| @tokenring-ai/app | workspace:* |
+| @tokenring-ai/chat | workspace:* |
+| @tokenring-ai/agent | workspace:* |
+| @tokenring-ai/filesystem | workspace:* |
+| @tokenring-ai/lifecycle | workspace:* |
+| @tokenring-ai/testing | workspace:* |
+| @tokenring-ai/terminal | workspace:* |
+| zod | ^4.3.6 |
 
 ### Development Dependencies
 
-| Package    | Version |
-|------------|---------|
-| vitest     | ^4.1.1  |
-| typescript | ^6.0.2  |
+| Package | Version |
+|---------|---------|
+| vitest | ^4.1.1 |
+| typescript | ^6.0.2 |
 
 ## Related Components
 
