@@ -29,7 +29,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
       const chatConfig = chatService.getChatConfig(agent);
 
-      const messages = await chatService.buildChatMessages({
+      const { instructions, messages } = await chatService.buildChatMessages({
         input:
           "Please create a git commit message for the set of changes you recently made. The message should be a short description of the changes you made. Only output the exact git commit message. Do not include any other text..",
         chatConfig,
@@ -44,6 +44,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       const client = chatModelRegistry.getClient(model);
       const [output] = await client.textChat(
         {
+          instructions,
           messages,
           tools: {},
         },
