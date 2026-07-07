@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
 
@@ -15,7 +16,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
   const result = await terminal.executeCommand("git", ["status", "--porcelain"], {}, agent);
   const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
   if (output.trim() !== "") {
-    throw new Error(`[${name}] Rollback aborted: uncommitted changes detected`);
+    throw new ToolCallError(name, `Rollback aborted: uncommitted changes detected`);
   }
 
   // Determine which commit to roll back to

@@ -1,5 +1,6 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition } from "@tokenring-ai/chat/schema";
+import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
 
@@ -30,7 +31,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
     }
     case "create":
       if (!branchName) {
-        throw new Error(`[${name}] Branch name is required for create action`);
+        throw new ToolCallError(name, `Branch name is required for create action`);
       }
       // Create a new branch
       agent.infoMessage(`[${name}] Creating new branch: ${branchName}...`);
@@ -40,7 +41,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
     case "switch":
       if (!branchName) {
-        throw new Error(`[${name}] Branch name is required for switch action`);
+        throw new ToolCallError(name, `Branch name is required for switch action`);
       }
       // Switch to existing branch
       agent.infoMessage(`[${name}] Switching to branch: ${branchName}...`);
@@ -50,7 +51,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
     case "delete":
       if (!branchName) {
-        throw new Error(`[${name}] Branch name is required for delete action`);
+        throw new ToolCallError(name, `Branch name is required for delete action`);
       }
       // Delete a branch
       agent.infoMessage(`[${name}] Deleting branch: ${branchName}...`);
