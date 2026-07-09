@@ -56,7 +56,7 @@ This package does not require any configuration options.
 
 None.
 
-### Sampling Configuration
+### Sample Configuration
 
 Not applicable - this package does not define sampling configuration.
 
