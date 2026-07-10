@@ -41,12 +41,10 @@ async function execute({ args, positionals, agent }: AgentCommandInputType<typeo
     message: "See attached file for git diff output.",
     attachments: [
       {
-        type: "attachment",
         name: "git_diff.txt",
         mimeType: "text/x-diff",
         body: await diff(diffArgs, agent),
         encoding: "text",
-        timestamp: Date.now(),
       },
     ],
   };
