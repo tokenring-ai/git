@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type { TokenRingToolDefinition } from "@tokenring-ai/chat/schema";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
@@ -8,7 +8,7 @@ import { z } from "zod";
 const name = "git_branch";
 const displayName = "Git/branch";
 
-export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<string> {
+export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const terminal = agent.requireServiceByType(TerminalService);
 
   const action = args.action;
@@ -27,7 +27,10 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
         }
       });
       agent.infoMessage(lines.join("\n"));
-      return "Branch list displayed successfully";
+      return {
+        message: "**Git Branch** Listed git branches",
+        result: "Branch list displayed successfully",
+      };
     }
     case "create":
       if (!branchName) {
@@ -37,7 +40,10 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       agent.infoMessage(`[${name}] Creating new branch: ${branchName}...`);
       await terminal.executeCommand("git", ["checkout", "-b", branchName], {}, agent);
       agent.infoMessage(`[${name}] Successfully created and switched to branch: ${branchName}`);
-      return `Branch '${branchName}' created and checked out`;
+      return {
+        message: `**Git Branch** Created branch ${branchName}`,
+        result: `Branch '${branchName}' created and checked out`,
+      };
 
     case "switch":
       if (!branchName) {
@@ -47,7 +53,10 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       agent.infoMessage(`[${name}] Switching to branch: ${branchName}...`);
       await terminal.executeCommand("git", ["checkout", branchName], {}, agent);
       agent.infoMessage(`[${name}] Successfully switched to branch: ${branchName}`);
-      return `Switched to branch '${branchName}'`;
+      return {
+        message: `**Git Branch** Switched to "${branchName}"`,
+        result: `Switched to branch '${branchName}'`,
+      };
 
     case "delete":
       if (!branchName) {
@@ -57,7 +66,10 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       agent.infoMessage(`[${name}] Deleting branch: ${branchName}...`);
       await terminal.executeCommand("git", ["branch", "-d", branchName], {}, agent);
       agent.infoMessage(`[${name}] Successfully deleted branch: ${branchName}`);
-      return `Branch '${branchName}' deleted`;
+      return {
+        message: `**Git Branch** Deleted "${branchName}"`,
+        result: `Branch '${branchName}' deleted`,
+      };
 
     case "current": {
       // Show current branch
@@ -65,7 +77,10 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       const currentBranch = result.status === "success" || result.status === "badExitCode" ? result.output : "";
       const current = currentBranch.trim();
       agent.infoMessage(`[${name}] Current branch: ${current}`);
-      return `Current branch: ${current}`;
+      return {
+        message: "**Git Branch** Retrieved current branch",
+        result: `Current branch: ${current}`,
+      };
     }
     default: {
       // Default: show current branch and list local branches
@@ -83,7 +98,10 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
         }
       });
       agent.infoMessage(lines.join("\n"));
-      return "Branch information displayed successfully";
+      return {
+        message: "**Git Branch** Retrieved branch status",
+        result: "Branch information displayed successfully",
+      };
     }
   }
 }

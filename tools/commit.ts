@@ -1,7 +1,7 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import { ChatModelRegistry } from "@tokenring-ai/ai-client/ModelRegistry";
 import { ChatService } from "@tokenring-ai/chat";
-import type { TokenRingToolDefinition } from "@tokenring-ai/chat/schema";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { FileSystemService } from "@tokenring-ai/filesystem";
 import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
@@ -10,7 +10,7 @@ import { z } from "zod";
 const name = "git_commit";
 const displayName = "Git/commit";
 
-export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<string> {
+export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const fileSystem = agent.requireServiceByType(FileSystemService);
   const terminal = agent.requireServiceByType(TerminalService);
   const chatModelRegistry = agent.requireServiceByType(ChatModelRegistry);
@@ -69,7 +69,10 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
   fileSystem.setDirty(false, agent);
   // Return only the result without tool name prefix
-  return "Changes successfully committed to git";
+  return {
+    message: `**Committed** ${gitCommitMessage}`,
+    result: "Changes successfully committed to git",
+  };
 }
 
 const description = "Commits changes in the source directory to git.";

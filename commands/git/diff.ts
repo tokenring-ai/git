@@ -43,7 +43,7 @@ async function execute({ args, positionals, agent }: AgentCommandInputType<typeo
       {
         name: "git_diff.txt",
         mimeType: "text/x-diff",
-        body: await diff(diffArgs, agent),
+        body: (await diff(diffArgs, agent)).result,
         encoding: "text",
       },
     ],

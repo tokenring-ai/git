@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type { TokenRingToolDefinition } from "@tokenring-ai/chat/schema";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
@@ -7,7 +7,7 @@ import { z } from "zod";
 const name = "git_rollback";
 const displayName = "Git/rollback";
 
-export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<string> {
+export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const terminal = agent.requireServiceByType(TerminalService);
 
   const toolName = "rollback";
@@ -35,7 +35,10 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
   }
 
   agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
-  return "Successfully rolled back to previous state";
+  return {
+    message: `**Rolled back**`,
+    result: "Successfully rolled back to previous state",
+  };
 }
 
 const description = "Rolls back to a previous git commit.";

@@ -1,5 +1,5 @@
 import type Agent from "@tokenring-ai/agent/Agent";
-import type { TokenRingToolDefinition } from "@tokenring-ai/chat/schema";
+import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { FileSystemService } from "@tokenring-ai/filesystem";
 import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
@@ -7,7 +7,7 @@ import { z } from "zod";
 const name = "git_diff";
 const displayName = "Git/diff";
 
-export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<string> {
+export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const terminal = agent.requireServiceByType(TerminalService);
 
   const gitArgs = ["diff", "--submodule=diff"];
@@ -29,10 +29,16 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
   const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
 
   if (output.trim() === "") {
-    return "No changes detected";
+    return {
+      message: `**Retrieved** git diff`,
+      result: "No changes detected",
+    };
   }
 
-  return output.trimEnd();
+  return {
+    message: `**Retrieved** git diff`,
+    result: output.trimEnd(),
+  };
 }
 
 const description = "Returns the current git diff for uncommitted changes in the repository & submodules.";
