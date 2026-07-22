@@ -966,7 +966,6 @@ pkg/git/
 │   │       ├── delete.ts  # git branch delete command implementation
 │   │       └── current.ts # git branch current command implementation
 ├── package.json
-├── vitest.config.ts
 └── LICENSE
 ```
 
@@ -1065,7 +1064,6 @@ agent.infoMessage(`[${name}] Changes committed to git`);
 
 | Package | Version |
 |---------|---------|
-| vitest | ^4.1.1 |
 | typescript | ^6.0.2 |
 
 ## Related Components
