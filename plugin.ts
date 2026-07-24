@@ -22,5 +22,5 @@ export default {
     app.addServices(new GitService());
     app.waitForService(AgentLifecycleService, lifecycleService => lifecycleService.addHooks(autoCommit));
   },
-  config: packageConfigSchema,
+  configSchema: packageConfigSchema,
 } satisfies TokenRingPlugin<typeof packageConfigSchema>;
