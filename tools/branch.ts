@@ -9,7 +9,7 @@ const name = "git_branch";
 const displayName = "Git/branch";
 
 export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const terminal = agent.requireServiceByType(TerminalService);
+  const terminal = agent.requireService(TerminalService);
 
   const action = args.action;
   const branchName = args.branchName;

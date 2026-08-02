@@ -12,8 +12,8 @@ const inputSchema = {
   ],
 } as const satisfies AgentCommandInputSchema;
 
-async function execute({ positionals, agent }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
-  const branchName = positionals.branchName;
+async function execute({ args, agent }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
+  const branchName = args.branchName;
 
   await branch({ action: "create", branchName }, agent);
   return `Created and switched to branch "${branchName}".`;

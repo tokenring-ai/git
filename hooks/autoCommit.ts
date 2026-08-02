@@ -11,8 +11,8 @@ const description = "Automatically commit changes to the source directory to git
 
 const callbacks = [
   new HookCallback(AfterTestsPassed, async (_data, agent) => {
-    const testingService = agent.requireServiceByType(TestingService);
-    const filesystem = agent.requireServiceByType(FileSystemService);
+    const testingService = agent.requireService(TestingService);
+    const filesystem = agent.requireService(FileSystemService);
     if (filesystem.isDirty(agent)) {
       if (!testingService.allTestsPassed(agent)) {
         agent.errorMessage("Not committing changes, due to tests not passing");

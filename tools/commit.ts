@@ -11,10 +11,10 @@ const name = "git_commit";
 const displayName = "Git/commit";
 
 export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const fileSystem = agent.requireServiceByType(FileSystemService);
-  const terminal = agent.requireServiceByType(TerminalService);
-  const chatModelRegistry = agent.requireServiceByType(ChatModelRegistry);
-  const chatService = agent.requireServiceByType(ChatService);
+  const fileSystem = agent.requireService(FileSystemService);
+  const terminal = agent.requireService(TerminalService);
+  const chatModelRegistry = agent.requireService(ChatModelRegistry);
+  const chatService = agent.requireService(ChatService);
 
   const currentMessage = chatService.getLastMessage(agent);
 

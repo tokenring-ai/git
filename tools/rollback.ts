@@ -8,7 +8,7 @@ const name = "git_rollback";
 const displayName = "Git/rollback";
 
 export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const terminal = agent.requireServiceByType(TerminalService);
+  const terminal = agent.requireService(TerminalService);
 
   const toolName = "rollback";
 

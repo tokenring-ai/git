@@ -128,10 +128,10 @@ export async function execute(
   args: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<string> {
-  const fileSystem = agent.requireServiceByType(FileSystemService);
-  const terminal = agent.requireServiceByType(TerminalService);
-  const chatModelRegistry = agent.requireServiceByType(ChatModelRegistry);
-  const chatService = agent.requireServiceByType(ChatService);
+  const fileSystem = agent.requireService(FileSystemService);
+  const terminal = agent.requireService(TerminalService);
+  const chatModelRegistry = agent.requireService(ChatModelRegistry);
+  const chatService = agent.requireService(ChatService);
 
   const currentMessage = chatService.getLastMessage(agent);
 
@@ -233,7 +233,7 @@ export async function execute(
   args: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<string> {
-  const terminal = agent.requireServiceByType(TerminalService);
+  const terminal = agent.requireService(TerminalService);
 
   const toolName = "rollback";
 
@@ -316,7 +316,7 @@ export async function execute(
   args: z.output<typeof inputSchema>,
   agent: Agent,
 ): Promise<string> {
-  const terminal = agent.requireServiceByType(TerminalService);
+  const terminal = agent.requireService(TerminalService);
 
   const action = args.action;
   const branchName = args.branchName;
@@ -667,8 +667,8 @@ import { AfterTestsPassed } from "@tokenring-ai/testing/hooks";
 
 const callbacks = [
   new HookCallback(AfterTestsPassed, async (_data, agent) => {
-    const testingService = agent.requireServiceByType(TestingService);
-    const filesystem = agent.requireServiceByType(FileSystemService);
+    const testingService = agent.requireService(TestingService);
+    const filesystem = agent.requireService(FileSystemService);
 
     if (filesystem.isDirty(agent)) {
       if (!testingService.allTestsPassed(agent)) {
@@ -833,7 +833,7 @@ For tools to function properly, the following services must be available:
 ```typescript
 // Access GitService for metadata
 import {GitService} from "@tokenring-ai/git";
-const gitService = agent.requireServiceByType(GitService);
+const gitService = agent.requireService(GitService);
 console.log(gitService.name, gitService.description);
 
 // Use git_commit tool

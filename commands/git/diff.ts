@@ -22,7 +22,7 @@ const inputSchema = {
   ],
 } as const satisfies AgentCommandInputSchema;
 
-async function execute({ args, positionals, agent }: AgentCommandInputType<typeof inputSchema>): Promise<TokenRingAgentCommandResult> {
+async function execute({ args, agent }: AgentCommandInputType<typeof inputSchema>): Promise<TokenRingAgentCommandResult> {
   if (args.staged && args.unstaged) {
     throw new CommandFailedError("Cannot use both --staged and --unstaged");
   }
@@ -33,8 +33,8 @@ async function execute({ args, positionals, agent }: AgentCommandInputType<typeo
   } else if (args.unstaged) {
     diffArgs.staged = false;
   }
-  if (positionals.path) {
-    diffArgs.path = positionals.path;
+  if (args.path) {
+    diffArgs.path = args.path;
   }
 
   return {

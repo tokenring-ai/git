@@ -8,7 +8,7 @@ const name = "git_diff";
 const displayName = "Git/diff";
 
 export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const terminal = agent.requireServiceByType(TerminalService);
+  const terminal = agent.requireService(TerminalService);
 
   const gitArgs = ["diff", "--submodule=diff"];
 
@@ -59,7 +59,7 @@ export default {
   adjustActivation: async (enabled: boolean, agent: Agent) => {
     if (enabled) return true;
 
-    const filesystem = agent.getServiceByType(FileSystemService);
+    const filesystem = agent.getService(FileSystemService);
     if (filesystem) {
       if (await filesystem.exists(".git", agent)) {
         return true;
