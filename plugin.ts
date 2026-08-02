@@ -14,9 +14,9 @@ export default {
   version: packageJSON.version,
   description: packageJSON.description,
   install(app) {
-    app.waitForService(ChatService, chatService => chatService.addTools(...tools));
+    app.waitForService(ChatService, chatService => chatService.addTools(tools));
     app.waitForService(AgentCommandService, agentCommandService => agentCommandService.addAgentCommands(agentCommands));
-    app.addServices(new GitService());
+    app.addService(new GitService());
     app.waitForService(AgentLifecycleService, lifecycleService => lifecycleService.addHooks(autoCommit));
   },
 } satisfies TokenRingPlugin;

@@ -7,13 +7,4 @@ import commit from "./commands/git/commit.ts";
 import diff from "./commands/git/diff.ts";
 import rollback from "./commands/git/rollback.ts";
 
-export default [
-  branchCreate,
-  branchCurrent,
-  branchDelete,
-  branchList,
-  branchSwitch,
-  commit,
-  diff,
-  rollback,
-];
+export default [branchCreate, branchCurrent, branchDelete, branchList, branchSwitch, commit, diff, rollback];
