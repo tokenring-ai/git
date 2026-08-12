@@ -28,5 +28,5 @@ export default {
 
 **Examples:**
 /git rollback
-/git rollback 3`,
+/git rollback --steps 3`,
 } satisfies TokenRingAgentCommand<typeof inputSchema>;

@@ -18,7 +18,7 @@ const callbacks = [
         agent.errorMessage("Not committing changes, due to tests not passing");
         return;
       }
-      await commit({ message: "" }, agent);
+      await commit({}, agent);
     }
   }),
 ];
