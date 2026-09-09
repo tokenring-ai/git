@@ -1,5 +1,6 @@
 import type { AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand } from "@tokenring-ai/agent/types";
 import { execute as branch } from "../../../tools/branch.ts";
+import resolveGitCwd from "../../../util/resolveGitCwd.ts";
 
 const inputSchema = {
   args: {},
@@ -15,7 +16,7 @@ const inputSchema = {
 async function execute({ args, agent }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
   const branchName = args.branchName;
 
-  await branch({ action: "switch", branchName }, agent);
+  await branch({ action: "switch", branchName, cwd: await resolveGitCwd(agent) }, agent);
   return `Switched to branch "${branchName}".`;
 }
 

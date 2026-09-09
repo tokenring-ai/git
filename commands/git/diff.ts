@@ -1,6 +1,7 @@
 import { CommandFailedError } from "@tokenring-ai/agent/AgentError";
 import type { AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand, TokenRingAgentCommandResult } from "@tokenring-ai/agent/types";
 import { execute as diff } from "../../tools/diff.ts";
+import resolveGitCwd from "../../util/resolveGitCwd.ts";
 
 const inputSchema = {
   args: {
@@ -43,7 +44,7 @@ async function execute({ args, agent }: AgentCommandInputType<typeof inputSchema
       {
         name: "git_diff.txt",
         mimeType: "text/x-diff",
-        body: (await diff(diffArgs, agent)).result,
+        body: (await diff({ ...diffArgs, cwd: await resolveGitCwd(agent) }, agent)).result,
         encoding: "text",
       },
     ],

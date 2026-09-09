@@ -1,5 +1,6 @@
 import type { AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand } from "@tokenring-ai/agent/types";
 import { execute as commit } from "../../tools/commit.ts";
+import resolveGitCwd from "../../util/resolveGitCwd.ts";
 
 const inputSchema = {
   args: {},
@@ -11,7 +12,7 @@ async function execute({ remainder, agent }: AgentCommandInputType<typeof inputS
   if (remainder) {
     commitArgs.message = remainder;
   }
-  await commit(commitArgs, agent);
+  await commit({ ...commitArgs, cwd: await resolveGitCwd(agent) }, agent);
   return "Commit completed.";
 }
 

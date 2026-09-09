@@ -63,8 +63,13 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
     agent.infoMessage(`[${name}] Using provided commit message.`);
   }
 
-  await terminal.executeCommand("git", ["add", "."], {}, agent);
-  await terminal.executeCommand("git", ["-c", "user.name=TokenRing", "-c", "user.email=coder@tokenring.ai", "commit", "-m", gitCommitMessage], {}, agent);
+  await terminal.executeCommand("git", ["add", "."], { workingDirectory: args.cwd }, agent);
+  await terminal.executeCommand(
+    "git",
+    ["-c", "user.name=TokenRing", "-c", "user.email=coder@tokenring.ai", "commit", "-m", gitCommitMessage],
+    { workingDirectory: args.cwd },
+    agent,
+  );
   agent.infoMessage(`[${name}] Changes committed to git.`);
 
   fileSystem.setDirty(false, agent);
@@ -77,6 +82,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
 const description = "Commits changes in the source directory to git.";
 const inputSchema = z.object({
+  cwd: z.string().describe("Absolute path of the git repository to operate in. Must be inside an allowed path."),
   message: z.string().describe("Optional commit message. If not provided, a message will be generated based on the chat context.").exactOptional(),
 });
 

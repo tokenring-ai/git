@@ -25,7 +25,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
     gitArgs.push("--", args.path);
   }
 
-  const result = await terminal.executeCommand("git", gitArgs, {}, agent);
+  const result = await terminal.executeCommand("git", gitArgs, { workingDirectory: args.cwd }, agent);
   const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
 
   if (output.trim() === "") {
@@ -43,6 +43,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
 const description = "Returns the current git diff for uncommitted changes in the repository & submodules.";
 const inputSchema = z.object({
+  cwd: z.string().describe("Absolute path of the git repository to operate in. Must be inside an allowed path."),
   staged: z
     .boolean()
     .describe("If true, return only staged changes. If false, return only unstaged changes. If omitted, return all uncommitted changes.")

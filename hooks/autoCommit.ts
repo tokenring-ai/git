@@ -1,4 +1,6 @@
+import path from "node:path";
 import FileSystemService from "@tokenring-ai/filesystem/FileSystemService";
+import { topLevelRoots } from "@tokenring-ai/filesystem/util/allowedPaths";
 import type { HookSubscription } from "@tokenring-ai/lifecycle/types";
 import { HookCallback } from "@tokenring-ai/lifecycle/util/hooks";
 import { AfterTestsPassed } from "@tokenring-ai/testing/hooks";
@@ -18,7 +20,14 @@ const callbacks = [
         agent.errorMessage("Not committing changes, due to tests not passing");
         return;
       }
-      await commit({}, agent);
+      // No single agent cwd anymore: commit each top-level write-allowed root
+      // that is a git repository.
+      const writeRoots = topLevelRoots(filesystem.getConfiguredAllowedPaths().filter(entry => entry.permission === "write"));
+      for (const root of writeRoots) {
+        if (await filesystem.exists(path.join(root.path, ".git"), agent)) {
+          await commit({ cwd: root.path }, agent);
+        }
+      }
     }
   }),
 ];

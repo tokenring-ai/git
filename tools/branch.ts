@@ -18,7 +18,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
     case "list": {
       // List all branches
       agent.infoMessage(`[${name}] Listing all branches...`);
-      const result = await terminal.executeCommand("git", ["branch", "-a"], {}, agent);
+      const result = await terminal.executeCommand("git", ["branch", "-a"], { workingDirectory: args.cwd }, agent);
       const lines: string[] = [`[${name}] Branches:`];
       const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
       output.split("\n").forEach((line: string) => {
@@ -38,7 +38,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       }
       // Create a new branch
       agent.infoMessage(`[${name}] Creating new branch: ${branchName}...`);
-      await terminal.executeCommand("git", ["checkout", "-b", branchName], {}, agent);
+      await terminal.executeCommand("git", ["checkout", "-b", branchName], { workingDirectory: args.cwd }, agent);
       agent.infoMessage(`[${name}] Successfully created and switched to branch: ${branchName}`);
       return {
         message: `**Git Branch** Created branch ${branchName}`,
@@ -51,7 +51,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       }
       // Switch to existing branch
       agent.infoMessage(`[${name}] Switching to branch: ${branchName}...`);
-      await terminal.executeCommand("git", ["checkout", branchName], {}, agent);
+      await terminal.executeCommand("git", ["checkout", branchName], { workingDirectory: args.cwd }, agent);
       agent.infoMessage(`[${name}] Successfully switched to branch: ${branchName}`);
       return {
         message: `**Git Branch** Switched to "${branchName}"`,
@@ -64,7 +64,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       }
       // Delete a branch
       agent.infoMessage(`[${name}] Deleting branch: ${branchName}...`);
-      await terminal.executeCommand("git", ["branch", "-d", branchName], {}, agent);
+      await terminal.executeCommand("git", ["branch", "-d", branchName], { workingDirectory: args.cwd }, agent);
       agent.infoMessage(`[${name}] Successfully deleted branch: ${branchName}`);
       return {
         message: `**Git Branch** Deleted "${branchName}"`,
@@ -73,7 +73,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
     case "current": {
       // Show current branch
-      const result = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
+      const result = await terminal.executeCommand("git", ["branch", "--show-current"], { workingDirectory: args.cwd }, agent);
       const currentBranch = result.status === "success" || result.status === "badExitCode" ? result.output : "";
       const current = currentBranch.trim();
       agent.infoMessage(`[${name}] Current branch: ${current}`);
@@ -84,9 +84,9 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
     }
     default: {
       // Default: show current branch and list local branches
-      const currentResult = await terminal.executeCommand("git", ["branch", "--show-current"], {}, agent);
+      const currentResult = await terminal.executeCommand("git", ["branch", "--show-current"], { workingDirectory: args.cwd }, agent);
       const currentBranchDefault = currentResult.status === "success" || currentResult.status === "badExitCode" ? currentResult.output : "";
-      const branchesResult = await terminal.executeCommand("git", ["branch"], {}, agent);
+      const branchesResult = await terminal.executeCommand("git", ["branch"], { workingDirectory: args.cwd }, agent);
       const branches = branchesResult.status === "success" || branchesResult.status === "badExitCode" ? branchesResult.output : "";
 
       const lines: string[] = [];
@@ -108,6 +108,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
 const description = "Manages git branches - list, create, switch, or delete branches.";
 const inputSchema = z.object({
+  cwd: z.string().describe("Absolute path of the git repository to operate in. Must be inside an allowed path."),
   action: z.enum(["list", "create", "switch", "delete", "current"]).describe("The branch action to perform"),
   branchName: z.string().describe("The name of the branch (required for create, switch, and delete actions)").exactOptional(),
 });

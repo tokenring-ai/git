@@ -1,5 +1,6 @@
 import type { AgentCommandInputSchema, AgentCommandInputType, TokenRingAgentCommand } from "@tokenring-ai/agent/types";
 import { execute as rollback } from "../../tools/rollback.ts";
+import resolveGitCwd from "../../util/resolveGitCwd.ts";
 
 const inputSchema = {
   args: {
@@ -15,7 +16,7 @@ const inputSchema = {
 
 async function execute({ args, agent }: AgentCommandInputType<typeof inputSchema>): Promise<string> {
   const steps = args.steps;
-  await rollback({ steps }, agent);
+  await rollback({ steps, cwd: await resolveGitCwd(agent) }, agent);
   return `Rolled back ${steps} commit(s).`;
 }
 
