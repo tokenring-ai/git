@@ -63,7 +63,9 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
     agent.infoMessage(`[${name}] Using provided commit message.`);
   }
 
-  await terminal.executeCommand("git", ["add", "."], { workingDirectory: args.cwd }, agent);
+  // `-u` stages modifications/deletions of tracked files only. `git add .` would
+  // also stage untracked files — including accidentally dropped secrets like .env.
+  await terminal.executeCommand("git", ["add", "-u"], { workingDirectory: args.cwd }, agent);
   await terminal.executeCommand(
     "git",
     ["-c", "user.name=TokenRing", "-c", "user.email=coder@tokenring.ai", "commit", "-m", gitCommitMessage],

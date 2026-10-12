@@ -1,14 +1,20 @@
 import type Agent from "@tokenring-ai/agent/Agent";
+import ChatService from "@tokenring-ai/chat/ChatService";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
 import { TerminalService } from "@tokenring-ai/terminal";
+import codeBlock from "@tokenring-ai/utility/string/codeBlock";
 import { z } from "zod";
 
 const name = "git_rollback";
 const displayName = "Git/rollback";
 
+/** Discarding commits and working-tree state is in the data-loss band. */
+const ROLLBACK_SAFETY_LEVEL = 8;
+
 export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const terminal = agent.requireService(TerminalService);
+  const chatService = agent.requireService(ChatService);
 
   const toolName = "rollback";
 
@@ -20,19 +26,40 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
   }
 
   // Determine which commit to roll back to
+  let resetTarget: string;
+  let summary: string;
   if (args.commit) {
-    // Rollback to specific commit
-    agent.infoMessage(`[${toolName}] Rolling back to commit ${args.commit}...`);
-    await terminal.executeCommand("git", ["reset", "--hard", args.commit], { workingDirectory: args.cwd }, agent);
+    resetTarget = args.commit;
+    summary = `commit ${args.commit}`;
   } else if (args.steps && Number.isInteger(args.steps) && args.steps > 0) {
-    // Rollback by a number of steps
-    agent.infoMessage(`[${toolName}] Rolling back ${args.steps} commit(s)...`);
-    await terminal.executeCommand("git", ["reset", "--hard", `HEAD~${args.steps}`], { workingDirectory: args.cwd }, agent);
+    resetTarget = `HEAD~${args.steps}`;
+    summary = `${args.steps} commit(s)`;
   } else {
-    // Default: rollback one commit
-    agent.infoMessage(`[${toolName}] Rolling back to previous commit...`);
-    await terminal.executeCommand("git", ["reset", "--hard", "HEAD~1"], { workingDirectory: args.cwd }, agent);
+    resetTarget = "HEAD~1";
+    summary = "the previous commit";
   }
+
+  const confirmed = await chatService.checkToolApproval(
+    {
+      toolName: name,
+      message: `Run \`git reset --hard ${resetTarget}\` in ${args.cwd}? This permanently discards commits.`,
+      detailedDescription: [
+        `Rewind the repository to ${summary}:`,
+        codeBlock(`git reset --hard ${resetTarget}`, "bash"),
+        "",
+        "Commits after the target are removed from the branch. Uncommitted changes abort the rollback before this point, but the reset itself cannot be undone.",
+      ].join("\n"),
+      safetyLevel: ROLLBACK_SAFETY_LEVEL,
+      default: false,
+    },
+    agent,
+  );
+  if (!confirmed) {
+    throw new ToolCallError(name, "User did not approve the rollback");
+  }
+
+  agent.infoMessage(`[${toolName}] Rolling back to ${summary}...`);
+  await terminal.executeCommand("git", ["reset", "--hard", resetTarget], { workingDirectory: args.cwd }, agent);
 
   agent.infoMessage(`[${toolName}] Rollback completed successfully.`);
   return {
@@ -41,7 +68,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
   };
 }
 
-const description = "Rolls back to a previous git commit.";
+const description = "Rolls back to a previous git commit. Requires user approval because the reset is destructive.";
 
 const inputSchema = z.object({
   cwd: z.string().describe("Absolute path of the git repository to operate in. Must be inside an allowed path."),

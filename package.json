@@ -11,6 +11,7 @@
     "@tokenring-ai/lifecycle": "workspace:*",
     "@tokenring-ai/testing": "workspace:*",
     "@tokenring-ai/terminal": "workspace:*",
+    "@tokenring-ai/utility": "workspace:*",
     "zod": "^4.4.3"
   },
   "exports": {
