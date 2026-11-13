@@ -12,7 +12,7 @@
     "@tokenring-ai/testing": "workspace:*",
     "@tokenring-ai/terminal": "workspace:*",
     "@tokenring-ai/utility": "workspace:*",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "exports": {
     ".": "./index.ts",
