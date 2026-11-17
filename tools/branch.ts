@@ -1,16 +1,14 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { ToolCallError } from "@tokenring-ai/chat/util/tokenRingTool";
-import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
+import { runGit } from "../util/runGit.ts";
 
 // Export the tool name in the required format
 const name = "git_branch";
 const displayName = "Git/branch";
 
 export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const terminal = agent.requireService(TerminalService);
-
   const action = args.action;
   const branchName = args.branchName;
 
@@ -18,9 +16,8 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
     case "list": {
       // List all branches
       agent.infoMessage(`[${name}] Listing all branches...`);
-      const result = await terminal.executeCommand("git", ["branch", "-a"], { workingDirectory: args.cwd }, agent);
+      const output = await runGit(name, ["branch", "-a"], args.cwd, agent);
       const lines: string[] = [`[${name}] Branches:`];
-      const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
       output.split("\n").forEach((line: string) => {
         if (line.trim()) {
           lines.push(`[${name}]   ${line}`);
@@ -38,7 +35,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       }
       // Create a new branch
       agent.infoMessage(`[${name}] Creating new branch: ${branchName}...`);
-      await terminal.executeCommand("git", ["checkout", "-b", branchName], { workingDirectory: args.cwd }, agent);
+      await runGit(name, ["checkout", "-b", branchName], args.cwd, agent);
       agent.infoMessage(`[${name}] Successfully created and switched to branch: ${branchName}`);
       return {
         message: `**Git Branch** Created branch ${branchName}`,
@@ -51,7 +48,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       }
       // Switch to existing branch
       agent.infoMessage(`[${name}] Switching to branch: ${branchName}...`);
-      await terminal.executeCommand("git", ["checkout", branchName], { workingDirectory: args.cwd }, agent);
+      await runGit(name, ["checkout", branchName], args.cwd, agent);
       agent.infoMessage(`[${name}] Successfully switched to branch: ${branchName}`);
       return {
         message: `**Git Branch** Switched to "${branchName}"`,
@@ -64,7 +61,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
       }
       // Delete a branch
       agent.infoMessage(`[${name}] Deleting branch: ${branchName}...`);
-      await terminal.executeCommand("git", ["branch", "-d", branchName], { workingDirectory: args.cwd }, agent);
+      await runGit(name, ["branch", "-d", branchName], args.cwd, agent);
       agent.infoMessage(`[${name}] Successfully deleted branch: ${branchName}`);
       return {
         message: `**Git Branch** Deleted "${branchName}"`,
@@ -73,8 +70,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
     case "current": {
       // Show current branch
-      const result = await terminal.executeCommand("git", ["branch", "--show-current"], { workingDirectory: args.cwd }, agent);
-      const currentBranch = result.status === "success" || result.status === "badExitCode" ? result.output : "";
+      const currentBranch = await runGit(name, ["branch", "--show-current"], args.cwd, agent);
       const current = currentBranch.trim();
       agent.infoMessage(`[${name}] Current branch: ${current}`);
       return {
@@ -84,10 +80,8 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
     }
     default: {
       // Default: show current branch and list local branches
-      const currentResult = await terminal.executeCommand("git", ["branch", "--show-current"], { workingDirectory: args.cwd }, agent);
-      const currentBranchDefault = currentResult.status === "success" || currentResult.status === "badExitCode" ? currentResult.output : "";
-      const branchesResult = await terminal.executeCommand("git", ["branch"], { workingDirectory: args.cwd }, agent);
-      const branches = branchesResult.status === "success" || branchesResult.status === "badExitCode" ? branchesResult.output : "";
+      const currentBranchDefault = await runGit(name, ["branch", "--show-current"], args.cwd, agent);
+      const branches = await runGit(name, ["branch"], args.cwd, agent);
 
       const lines: string[] = [];
       lines.push(`[${name}] Current branch: ${currentBranchDefault.trim()}`);

@@ -3,8 +3,8 @@ import { ChatModelRegistry } from "@tokenring-ai/ai-client/ModelRegistry";
 import { ChatService } from "@tokenring-ai/chat";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { FileSystemService } from "@tokenring-ai/filesystem";
-import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
+import { runGit } from "../util/runGit.ts";
 
 // Exported tool name used for chat messages and identification
 const name = "git_commit";
@@ -12,7 +12,6 @@ const displayName = "Git/commit";
 
 export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
   const fileSystem = agent.requireService(FileSystemService);
-  const terminal = agent.requireService(TerminalService);
   const chatModelRegistry = agent.requireService(ChatModelRegistry);
   const chatService = agent.requireService(ChatService);
 
@@ -65,13 +64,17 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
 
   // `-u` stages modifications/deletions of tracked files only. `git add .` would
   // also stage untracked files — including accidentally dropped secrets like .env.
-  await terminal.executeCommand("git", ["add", "-u"], { workingDirectory: args.cwd }, agent);
-  await terminal.executeCommand(
-    "git",
-    ["-c", "user.name=TokenRing", "-c", "user.email=coder@tokenring.ai", "commit", "-m", gitCommitMessage],
-    { workingDirectory: args.cwd },
-    agent,
-  );
+  await runGit(name, ["add", "-u"], args.cwd, agent);
+  // Nothing staged (no tracked file changed; new files are not added, see above): say so rather
+  // than letting `git commit` fail, and leave the changes marked as not committed.
+  const staged = await runGit(name, ["diff", "--cached", "--name-only"], args.cwd, agent);
+  if (staged.trim() === "") {
+    return {
+      message: "**Git commit** Nothing to commit",
+      result: "Nothing to commit: no tracked files changed. New files are not added automatically; stage them with git add first.",
+    };
+  }
+  await runGit(name, ["-c", "user.name=TokenRing", "-c", "user.email=coder@tokenring.ai", "commit", "-m", gitCommitMessage], args.cwd, agent);
   agent.infoMessage(`[${name}] Changes committed to git.`);
 
   fileSystem.setDirty(false, agent);

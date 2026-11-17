@@ -1,15 +1,13 @@
 import type Agent from "@tokenring-ai/agent/Agent";
 import type { TokenRingToolDefinition, TokenRingToolResult } from "@tokenring-ai/chat/schema";
 import { FileSystemService } from "@tokenring-ai/filesystem";
-import { TerminalService } from "@tokenring-ai/terminal";
 import { z } from "zod";
+import { runGit } from "../util/runGit.ts";
 
 const name = "git_diff";
 const displayName = "Git/diff";
 
 export async function execute(args: z.output<typeof inputSchema>, agent: Agent): Promise<TokenRingToolResult> {
-  const terminal = agent.requireService(TerminalService);
-
   const gitArgs = ["diff", "--submodule=diff"];
 
   if (args.staged === true) {
@@ -25,8 +23,7 @@ export async function execute(args: z.output<typeof inputSchema>, agent: Agent):
     gitArgs.push("--", args.path);
   }
 
-  const result = await terminal.executeCommand("git", gitArgs, { workingDirectory: args.cwd }, agent);
-  const output = result.status === "success" || result.status === "badExitCode" ? result.output : "";
+  const output = await runGit(name, gitArgs, args.cwd, agent);
 
   if (output.trim() === "") {
     return {

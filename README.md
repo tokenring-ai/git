@@ -7,7 +7,7 @@ Git integration package for TokenRing AI agents, providing version control tools
 **Key Features:**
 
 - **AI-Powered Commit Messages**: Generate commit messages based on chat context
-- **Automated Commits**: Automatic commits after successful testing via hooks
+- **Automated Commits (opt-in)**: Off by default. Set `git.autoCommit: true` and enable the `autoCommit` hook to commit after a passing test run; every commit is announced in the agent output
 - **Interactive Commands**: Multiple git commands for Git operations
 - **Branch Management**: List, create, switch, delete, and show current branches
 - **Safe Rollbacks**: Validation before rollbacks to prevent data loss
@@ -50,7 +50,20 @@ bun add @tokenring-ai/git
 
 ## Configuration
 
-This package does not require any configuration options.
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `git.autoCommit` | boolean | `false` | Allow the `autoCommit` hook to commit. With `false` the hook does nothing. |
+
+### Auto commit: when it runs
+
+Nothing commits unless **both** are true:
+
+1. `git.autoCommit: true` in config.
+2. The `autoCommit` lifecycle hook is enabled for the agent: listed in `lifecycle.globalHooks`, `lifecycle.agentDefaults.enabledHooks`, the agent type's `lifecycle.enabledHooks`, or turned on with the hooks command. No shipped agent type or default config enables it.
+
+It then fires on `AfterTestsPassed`, which the testing plugin emits when a whole test run passes (via `/test` or the `autoTest` hook). If files are dirty, it commits tracked changes (`git add -u`, so new files are never added) in each top-level write-allowed root that is a git repository. If tests did not all pass it commits nothing and prints "Not committing changes, due to tests not passing".
+
+Every commit prints an info message in the agent output naming the repo, the short hash and subject, and how to undo it: `git -C <repo> reset --soft HEAD~1`.
 
 ### Environment Variables
 
@@ -114,7 +127,9 @@ const inputSchema = z.object({
 
 **Functionality:**
 
-- Commits all changes to git (stages all changes with `git add .`)
+- Stages modifications and deletions of tracked files (`git add -u`); new untracked files are never added automatically
+- Returns "Nothing to commit" and leaves the changes uncommitted when no tracked file changed
+- A failed git command (non-zero exit) fails the tool with git's output
 - Uses AI to generate commit messages if none provided
 - Uses last two chat messages (system/user) for context when generating messages
 - Sets git user identity as "TokenRing" with email `coder@tokenring.ai`
@@ -220,7 +235,7 @@ const inputSchema = z.object({
 **Functionality:**
 
 - Validates no uncommitted changes exist via `git status --porcelain`
-- Aborts rollback if uncommitted changes detected
+- Aborts rollback if uncommitted changes detected, or if `git status` itself fails
 - Supports rollback to specific commit hash
 - Supports rollback by number of steps
 - Default behavior rolls back one commit (uses `HEAD~1`)
@@ -419,9 +434,9 @@ const inputSchema = {
 
 **Functionality:**
 
-- Commits all changes in the source directory to git
+- Commits tracked changes in the source directory to git
 - If no message is provided, an AI-generated commit message will be used
-- Stages all changes before committing (git add .)
+- Stages modifications and deletions of tracked files (git add -u); untracked files are not added
 - Uses "TokenRing" as the committer identity
 
 **Example:**
@@ -871,7 +886,7 @@ This package does not define any state slices. It relies on the FileSystemServic
 ### Git Errors
 
 - **Uncommitted changes**: Rollback aborts with clear message if any uncommitted changes exist
-- **Git command failures**: All tool commands wrap errors in tool name prefix
+- **Git command failures**: A git command that exits non-zero fails the tool with git's output, so a failure is never reported as success
 - **Premature commit**: Commit only proceeds if repository is not in clean state (for autoCommit hook)
 
 ### Error Message Format
